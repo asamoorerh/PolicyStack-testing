@@ -1,5 +1,5 @@
 # values.yaml
-components:
+stack:
   replaceMe:
     enable: false
     defaultPolicy:

@@ -20,7 +20,7 @@ spec:
               repoURL: 'https://github.com/Aboot-face/cluster-configuration.git'
               revision: '{{ "{{" }}index .metadata.labels "git.{{ .Values.baseDomain }}/revision"{{ "}}" }}'
               directories:
-              - path: 'components/*'
+              - path: 'stack/*'
   template:
     metadata:
       name: '{{ "{{" }}.path.basenameNormalized{{ "}}" }}-{{ "{{"}}.name{{ "}}" }}'

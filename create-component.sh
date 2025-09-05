@@ -2,7 +2,7 @@
 
 # Configuration
 SOURCE_DIR="./sample-app" # Location of the sample app chart
-DESTINATION_BASE="./components" # Location of the components
+DESTINATION_BASE="./stack" # Location of the components
 
 # Colors for output
 RED='\033[0;31m'
@@ -159,5 +159,5 @@ echo -e "${GREEN}✓ Component chart successfully created!${NC}"
 echo "Location: $DEST_DIR"
 echo
 echo "Next steps:"
-echo "  Update w/ components to deploy"
+echo "  Update w/ configurations to deploy"
 echo "  Update values.yaml"
