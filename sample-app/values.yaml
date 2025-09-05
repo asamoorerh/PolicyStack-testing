@@ -1,0 +1,79 @@
+# values.yaml
+components:
+  replaceMe:
+    enable: false
+    defaultPolicy:
+      categories:
+        - CM Configuration Management
+      controls:
+        - CM-2 Baseline Configuration
+      standards:
+        - NIST SP 800-53
+      severity: medium
+      remediationAction: enforce
+      disabled: false
+    
+    # Define policies (these will be created as Policy resources)
+    policies:
+      - name: custom-policy-1
+        enabled: true
+        description: "Custom policy for specific configurations"
+        categories:
+          - CM Configuration Management
+        controls:
+          - CM-2 Baseline Configuration
+        standards:
+          - NIST SP 800-53
+        remediationAction: enforce
+        severity: medium
+        disabled: false
+    
+    # Define configuration policies (these will be created as ConfigurationPolicy resources)
+    # and can be bound to a specific policy or the default policy
+    configPolicies:
+      - name: example-config
+        enabled: true
+        description: "Example configuration policy"
+        policyRef: custom-policy-1  # Bind to specific policy (if empty, uses default policy)
+        severity: high  # Override severity for this config
+        remediationAction: inform  # Override remediation action for this config
+        complianceType: musthave
+        templateName: example-template  # References template file in templates-to-convert directory
+      
+      - name: test-config
+        enabled: true
+        description: "Test configuration policy"
+        policyRef: custom-policy-1
+        severity: ""  # Will use policy's severity
+        remediationAction: ""  # Will use policy's remediation action
+        complianceType: musthave
+        templateName: test-template  # References template file in templates-to-convert directory
+        enableTemplateParameters: true
+        templateParameters:
+          name: testcm
+          value1: somethingidk
+    
+    operatorPolicies:
+      - name: openshift-gitops
+        enabled: true
+        description: "Operator policy for OpenShift GitOps"
+        displayName: "Default Operator"
+        policyRef: ""  # Will use default policy
+        severity: medium
+        remediationAction: inform
+        complianceType: musthave
+        namespace: openshift-gitops
+        operatorGroup:
+          name: openshift-gitops-group  # Optional, defaults to subscription name if not provided
+        subscription:
+          channel: stable
+          name: openshift-gitops-operator
+          source: redhat-operators
+          sourceNamespace: openshift-marketplace
+          startingCSV: gitops-operator.v1.6.0  # Optional
+          config:  # Optional
+            tolerations:
+              - key: node-role.kubernetes.io/master
+                value: ""
+                effect: NoSchedule
+        upgradeApproval: Automatic  # Optional
