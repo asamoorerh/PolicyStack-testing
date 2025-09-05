@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configuration
-SOURCE_DIR="./sample-app" # Location of the sample app chart
-DESTINATION_BASE="./stack" # Location of the components
+SOURCE_DIR="./sample-element" # Location of the sample element chart
+DESTINATION_BASE="./stack" # Location of the elements
 
 # Colors for output
 RED='\033[0;31m'
@@ -42,7 +42,7 @@ escape_for_sed() {
     echo "$1" | sed 's/[[\.*^$()+?{|]/\\&/g'
 }
 
-echo -e "${GREEN}=== Component Chart Setup Script ===${NC}"
+echo -e "${GREEN}=== Element Chart Setup Script ===${NC}"
 echo
 
 # Check if source directory exists
@@ -90,7 +90,7 @@ if [ -d "$DEST_DIR" ]; then
 fi
 
 echo
-echo -e "${GREEN}Creating new Component chart...${NC}"
+echo -e "${GREEN}Creating new Element chart...${NC}"
 echo "- Name: $CHART_NAME"
 echo "- Description: $CHART_DESCRIPTION"
 echo "- CamelCase name: $CAMEL_CASE_NAME"
@@ -155,7 +155,7 @@ else
 fi
 
 echo
-echo -e "${GREEN}✓ Component chart successfully created!${NC}"
+echo -e "${GREEN}✓ Element chart successfully created!${NC}"
 echo "Location: $DEST_DIR"
 echo
 echo "Next steps:"
