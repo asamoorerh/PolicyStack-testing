@@ -1,9 +1,90 @@
 # PolicyStack
 PolicyStack is a GitOps implementation utilizing ACM (Advanced Cluster Management) policies to propagate configuration. The purpose is to create a "stack" of policies to apply to clusters. It allows for fine-grained configuration changes on various different bases (per-cluster, per-environment, etc). The included helm chart allows for `elements` (defined as a single helm chart inside the stack) in this "policy stack" to be modified at any point (unlike an actual stack, each element can be modified and enabled/disabled at any point). It also allows for rapid development and integration of new configurations due to the simple nature of helm.
-## How to create new configuration
-1. Run the `create-element.sh` script. It will accept two user-inputs. First is the name of the element you would like to create. Only alphanumeric characters and dashes (-) are accepted. Second is a description. This will be used for the chart description.
+## Tools
+### How to create new configuration
+1. Run the `tools/create-element.sh` script. It will accept two user-inputs. First is the name of the element you would like to create. Only alphanumeric characters and dashes (-) are accepted. Second is a description. This will be used for the chart description.
 2. This will create a directory under the `stack/` dir with the configured helm chart.
 3. Update the `values.yaml` w/ everything that needs to be deployed. This includes updating the `converters` dir.
+
+### Documentation
+
+#### Overview
+PolicyStack includes an automated documentation generator that creates comprehensive markdown documentation from your helm chart values files. This tool parses special comment annotations in `values.yaml` files to generate detailed, human-readable documentation for each element in your policy stack.
+
+#### Why?
+
+Managing complex policy configurations across multiple clusters requires clear documentation, but manually maintaining docs alongside code is error-prone and time-consuming. This generator solves several problems:
+
+1. **Single Source of Truth**: Documentation lives directly in your values files as comments, ensuring it stays synchronized with actual configurations
+2. **Consistency**: Generates uniform documentation structure across all stack elements
+3. **Completeness**: Automatically documents all enabled policies, configurations, operators, and certificates with their relationships
+4. **Validation**: Identifies orphaned sub-policies that reference disabled or non-existent parent policies
+5. **Compliance Tracking**: Clearly shows which security controls, standards, and categories each policy addresses
+
+#### Usage
+
+##### Generate documentation for all elements:
+```bash
+python generate_docs.py
+```
+
+##### Specify custom directories:
+```bash
+python generate_docs.py --stack-dir ./stack --output-dir ./docs
+```
+
+##### Generate documentation for a specific element:
+```bash
+python generate_docs.py --element security-config
+```
+
+#### Comment Annotation Syntax
+
+Add descriptions to any field in your values.yaml using `@description:` or `@desc:` comments placed immediately before the field:
+
+```yaml
+stack:
+  # @description: Main security configuration for baseline controls
+  securityConfig:
+    # @desc: Enable or disable this entire configuration set
+    enable: true
+    
+    policies:
+      # @description: Network segmentation and traffic control policy
+      - name: network-security
+        enabled: true
+        # @desc: Automatically remediate violations (inform/enforce)
+        remediationAction: enforce
+        
+        # @description: Approved operator versions for controlled upgrades
+        versions:
+          # @desc: Initial stable release
+          - v1.0.0
+          # @desc: Security patch with CVE fixes
+          - v1.0.1
+```
+
+#### Generated Documentation Structure
+
+The generator creates:
+- **Element Overview**: Chart description and metadata
+- **Component Configuration**: High-level settings and defaults
+- **Policies Section**: Detailed documentation for each policy including:
+  - Compliance metadata (categories, controls, standards)
+  - Associated sub-policies (configurations, operators, certificates)
+  - Severity and remediation actions
+- **PolicySets**: Grouped policy collections
+- **Warnings**: Identifies orphaned policies and configuration issues
+- **Summary Statistics**: Resource counts and totals
+
+#### Output
+
+Documentation is generated as markdown files in the `docs/` directory (or specified output directory):
+- Individual `.md` file for each element
+- `README.md` index file listing all documented elements
+- Full comment notation guide for contributors
+
+This automation ensures your PolicyStack documentation remains accurate, comprehensive, and aligned with your actual configurations, making it easier for teams to understand, audit, and maintain your cluster policies.
 
 ## Values File Structure for GitOps
 

@@ -3,7 +3,7 @@
 
 stack:
   # @description: Sample element demonstrating all policy types and documentation features
-  replaceMe:
+  securityConfig:
     # @desc: Master control to enable/disable all policies in this element
     enable: false
     
@@ -309,6 +309,11 @@ stack:
             - gcr.io/distroless
           # @desc: Require image signatures
           requireSignatures: true
+          # @desc: Public key for signature verification
+          signaturePublicKey: |
+            -----BEGIN PUBLIC KEY-----
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCg...
+            -----END PUBLIC KEY-----
           # @desc: Blocked image tags
           blockedTags:
             - latest
