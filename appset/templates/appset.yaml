@@ -17,7 +17,7 @@ spec:
                   - key: git.{{ .Values.baseDomain }}/revision
                     operator: Exists
           - git:
-              repoURL: 'https://github.com/Aboot-face/cluster-configuration.git'
+              repoURL: '{{ .Values.gitRepo }}'
               revision: '{{ "{{" }}index .metadata.labels "git.{{ .Values.baseDomain }}/revision"{{ "}}" }}'
               directories:
               - path: 'stack/*'
@@ -27,7 +27,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: 'https://github.com/Aboot-face/cluster-configuration.git'
+        repoURL: '{{ .Values.gitRepo }}'
         targetRevision: '{{ "{{" }}index .metadata.labels "git.{{ .Values.baseDomain }}/revision"{{ "}}" }}'
         path: '{{ "{{" }}.path.path{{ "}}" }}'
       destination:

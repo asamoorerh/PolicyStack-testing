@@ -17,7 +17,7 @@ spec:
                   - key: git.example.com/revision
                     operator: Exists
           - git:
-              repoURL: 'https://github.com/Aboot-face/cluster-configuration.git'
+              repoURL: 'https://github.com/PolicyStack/PolicyStack.git'
               revision: '{{index .metadata.labels "git.example.com/revision"}}'
               directories:
               - path: 'stack/*'
@@ -27,7 +27,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: 'https://github.com/Aboot-face/cluster-configuration.git'
+        repoURL: 'https://github.com/PolicyStack/PolicyStack.git'
         targetRevision: '{{index .metadata.labels "git.example.com/revision"}}'
         path: '{{.path.path}}'
       destination:
