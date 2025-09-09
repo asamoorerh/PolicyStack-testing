@@ -6,13 +6,17 @@ Generates markdown documentation for PolicyStack elements by parsing values.yaml
 and extracting configuration details with support for inline comment annotations at any level.
 
 Usage:
-    python generate_docs.py [--output-dir docs] [--stack-dir stack]
+    python doc-generator.py [--output-dir docs] [--stack-dir stack]
+    python doc-generator.py --check  # Check if docs are up to date
 """
 
 import os
 import re
 import yaml
 import argparse
+import tempfile
+import difflib
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple, Union
 from dataclasses import dataclass, field
@@ -213,11 +217,29 @@ class YAMLLoader:
 class DocumentationGenerator:
     """Generates markdown documentation for PolicyStack elements"""
     
-    def __init__(self, stack_dir: str = "stack", output_dir: str = "docs"):
+    def __init__(self, stack_dir: str = "stack", output_dir: str = "docs", check_mode: bool = False):
         self.stack_dir = Path(stack_dir)
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        self.check_mode = check_mode
         
+        if not check_mode:
+            self.output_dir.mkdir(exist_ok=True)
+        
+    def normalize_timestamp(self, content: str) -> str:
+        """Replace timestamp with a placeholder for comparison"""
+        # Replace any timestamp in the format YYYY-MM-DD HH:MM:SS with a placeholder
+        return re.sub(
+            r'\*Generated: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\*',
+            '*Generated: TIMESTAMP_PLACEHOLDER*',
+            content
+        )
+    
+    def compare_content(self, existing_content: str, new_content: str) -> bool:
+        """Compare content ignoring timestamp differences"""
+        normalized_existing = self.normalize_timestamp(existing_content)
+        normalized_new = self.normalize_timestamp(new_content)
+        return normalized_existing == normalized_new
+    
     def to_camel_case(self, name: str) -> str:
         """Convert kebab-case to camelCase"""
         parts = name.split('-')
@@ -840,6 +862,173 @@ class DocumentationGenerator:
             'policySets': sum(1 for p in component.get('policySets', []) if p.get('enabled'))
         }
     
+    def check_all_docs(self) -> int:
+        """Check if all documentation is up to date"""
+        if not self.stack_dir.exists():
+            print(f"Error: Stack directory '{self.stack_dir}' does not exist")
+            return 1
+        
+        docs_outdated = False
+        changes_needed = []
+        
+        # Process each directory in the stack
+        for element_path in self.stack_dir.iterdir():
+            if element_path.is_dir() and not element_path.name.startswith('.'):
+                # Generate documentation content
+                doc_content = self.generate_element_docs(element_path)
+                
+                if doc_content:
+                    output_file = self.output_dir / f"{element_path.name}.md"
+                    
+                    # Check if file exists
+                    if not output_file.exists():
+                        print(f"❌ Missing: {output_file}")
+                        changes_needed.append(f"Missing: {element_path.name}.md")
+                        docs_outdated = True
+                    else:
+                        # Read existing content
+                        with open(output_file, 'r') as f:
+                            existing_content = f.read()
+                        
+                        # Compare ignoring timestamps
+                        if not self.compare_content(existing_content, doc_content):
+                            print(f"❌ Outdated: {output_file}")
+                            changes_needed.append(f"Outdated: {element_path.name}.md")
+                            docs_outdated = True
+                        else:
+                            print(f"✓ Current: {output_file}")
+        
+        # Check index file
+        elements = []
+        for element_path in self.stack_dir.iterdir():
+            if element_path.is_dir() and not element_path.name.startswith('.'):
+                values_file = element_path / "values.yaml"
+                if values_file.exists():
+                    # Load values to check if there's valid content
+                    with open(values_file, 'r') as f:
+                        values = yaml.safe_load(f) or {}
+                    component_name = self.to_camel_case(element_path.name)
+                    if values.get('stack', {}).get(component_name):
+                        elements.append(element_path.name)
+        
+        index_content = self._generate_index_content(sorted(elements))
+        index_file = self.output_dir / "README.md"
+        
+        if not index_file.exists():
+            print(f"❌ Missing: {index_file}")
+            changes_needed.append("Missing: README.md")
+            docs_outdated = True
+        else:
+            with open(index_file, 'r') as f:
+                existing_index = f.read()
+            
+            if not self.compare_content(existing_index, index_content):
+                print(f"❌ Outdated: {index_file}")
+                changes_needed.append("Outdated: README.md")
+                docs_outdated = True
+            else:
+                print(f"✓ Current: {index_file}")
+        
+        # Print summary
+        print("\n" + "="*50)
+        if docs_outdated:
+            print("📚 Documentation Status: OUTDATED")
+            print("\nFiles needing updates:")
+            for change in changes_needed:
+                print(f"  - {change}")
+            print("\nRun 'python tools/doc-generator.py' to update documentation")
+            return 1
+        else:
+            print("📚 Documentation Status: UP TO DATE")
+            print("All documentation is current (ignoring timestamp changes)")
+            return 0
+    
+    def _generate_index_content(self, elements: List[str]) -> str:
+        """Generate index file content"""
+        lines = []
+        lines.append("# PolicyStack Documentation Index")
+        lines.append("")
+        lines.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+        lines.append("")
+        lines.append("## Available Elements")
+        lines.append("")
+        
+        if elements:
+            for element in elements:
+                lines.append(f"- [{element}](./{element}.md)")
+        else:
+            lines.append("No elements documented yet.")
+        
+        lines.append("")
+        lines.append("## Comment Notation Guide")
+        lines.append("")
+        lines.append("Use special comment notation in values.yaml files to add descriptions at any level:")
+        lines.append("")
+        lines.append("### Basic Usage")
+        lines.append("")
+        lines.append("```yaml")
+        lines.append("# @description: This policy enforces security standards")
+        lines.append("security-policy:")
+        lines.append("  enabled: true")
+        lines.append("```")
+        lines.append("")
+        
+        lines.append("### Nested Field Descriptions")
+        lines.append("")
+        lines.append("```yaml")
+        lines.append("configPolicies:")
+        lines.append("  - name: example-config")
+        lines.append("    # @desc: Whether to actually apply this configuration")
+        lines.append("    enabled: true")
+        lines.append("    ")
+        lines.append("    # @description: Individual template configurations")
+        lines.append("    templateNames:")
+        lines.append("      # @desc: Network policy template for namespace isolation")
+        lines.append("      - name: network-policy")
+        lines.append("        complianceType: musthave")
+        lines.append("      ")
+        lines.append("      # @desc: RBAC template for role bindings")
+        lines.append("      - name: rbac-config")
+        lines.append("        complianceType: musthave")
+        lines.append("    ")
+        lines.append("    # @description: Template parameters with specific values")
+        lines.append("    templateParameters:")
+        lines.append("      # @desc: The namespace to apply policies to")
+        lines.append("      targetNamespace: production")
+        lines.append("      ")
+        lines.append("      # @desc: Severity level for alerts (low/medium/high/critical)")
+        lines.append("      alertLevel: high")
+        lines.append("```")
+        lines.append("")
+        
+        lines.append("### Array Item Descriptions")
+        lines.append("")
+        lines.append("```yaml")
+        lines.append("operatorPolicies:")
+        lines.append("  # @description: GitOps operator for continuous deployment")
+        lines.append("  - name: openshift-gitops")
+        lines.append("    enabled: true")
+        lines.append("    ")
+        lines.append("    # @desc: Which approved versions can be installed")
+        lines.append("    versions:")
+        lines.append("      # @desc: Initial stable release")
+        lines.append("      - gitops-operator.v1.5.0")
+        lines.append("      # @desc: Security patch release")
+        lines.append("      - gitops-operator.v1.5.1")
+        lines.append("      # @desc: Feature update with performance improvements")
+        lines.append("      - gitops-operator.v1.6.0")
+        lines.append("```")
+        lines.append("")
+        
+        lines.append("## Notes")
+        lines.append("")
+        lines.append("- Place `@description:` or `@desc:` comments on the line immediately before the field")
+        lines.append("- Descriptions work at any nesting level")
+        lines.append("- Array items can be documented by placing the comment before the item")
+        lines.append("- Both `@description:` and `@desc:` are supported (they're equivalent)")
+        
+        return '\n'.join(lines)
+    
     def generate_all_docs(self):
         """Generate documentation for all elements in the stack"""
         if not self.stack_dir.exists():
@@ -875,75 +1064,10 @@ class DocumentationGenerator:
     def generate_index(self, elements: List[str]):
         """Generate an index file listing all documented elements"""
         index_file = self.output_dir / "README.md"
+        content = self._generate_index_content(sorted(elements))
         
         with open(index_file, 'w') as f:
-            f.write("# PolicyStack Documentation Index\n\n")
-            f.write(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n")
-            f.write("## Available Elements\n\n")
-            
-            if elements:
-                for element in sorted(elements):
-                    f.write(f"- [{element}](./{element}.md)\n")
-            else:
-                f.write("No elements documented yet.\n")
-            
-            f.write("\n## Comment Notation Guide\n\n")
-            f.write("Use special comment notation in values.yaml files to add descriptions at any level:\n\n")
-            f.write("### Basic Usage\n\n")
-            f.write("```yaml\n")
-            f.write("# @description: This policy enforces security standards\n")
-            f.write("security-policy:\n")
-            f.write("  enabled: true\n")
-            f.write("```\n\n")
-            
-            f.write("### Nested Field Descriptions\n\n")
-            f.write("```yaml\n")
-            f.write("configPolicies:\n")
-            f.write("  - name: example-config\n")
-            f.write("    # @desc: Whether to actually apply this configuration\n")
-            f.write("    enabled: true\n")
-            f.write("    \n")
-            f.write("    # @description: Individual template configurations\n")
-            f.write("    templateNames:\n")
-            f.write("      # @desc: Network policy template for namespace isolation\n")
-            f.write("      - name: network-policy\n")
-            f.write("        complianceType: musthave\n")
-            f.write("      \n")
-            f.write("      # @desc: RBAC template for role bindings\n")
-            f.write("      - name: rbac-config\n")
-            f.write("        complianceType: musthave\n")
-            f.write("    \n")
-            f.write("    # @description: Template parameters with specific values\n")
-            f.write("    templateParameters:\n")
-            f.write("      # @desc: The namespace to apply policies to\n")
-            f.write("      targetNamespace: production\n")
-            f.write("      \n")
-            f.write("      # @desc: Severity level for alerts (low/medium/high/critical)\n")
-            f.write("      alertLevel: high\n")
-            f.write("```\n\n")
-            
-            f.write("### Array Item Descriptions\n\n")
-            f.write("```yaml\n")
-            f.write("operatorPolicies:\n")
-            f.write("  # @description: GitOps operator for continuous deployment\n")
-            f.write("  - name: openshift-gitops\n")
-            f.write("    enabled: true\n")
-            f.write("    \n")
-            f.write("    # @desc: Which approved versions can be installed\n")
-            f.write("    versions:\n")
-            f.write("      # @desc: Initial stable release\n")
-            f.write("      - gitops-operator.v1.5.0\n")
-            f.write("      # @desc: Security patch release\n")
-            f.write("      - gitops-operator.v1.5.1\n")
-            f.write("      # @desc: Feature update with performance improvements\n")
-            f.write("      - gitops-operator.v1.6.0\n")
-            f.write("```\n\n")
-            
-            f.write("## Notes\n\n")
-            f.write("- Place `@description:` or `@desc:` comments on the line immediately before the field\n")
-            f.write("- Descriptions work at any nesting level\n")
-            f.write("- Array items can be documented by placing the comment before the item\n")
-            f.write("- Both `@description:` and `@desc:` are supported (they're equivalent)\n")
+            f.write(content)
 
 
 def main():
@@ -954,13 +1078,16 @@ def main():
         epilog="""
 Examples:
   # Generate docs with default settings
-  python generate_docs.py
+  python doc-generator.py
+  
+  # Check if documentation is up to date
+  python doc-generator.py --check
   
   # Specify custom directories
-  python generate_docs.py --stack-dir ./stack --output-dir ./documentation
+  python doc-generator.py --stack-dir ./stack --output-dir ./documentation
   
   # Generate docs for a specific element
-  python generate_docs.py --element sample-element
+  python doc-generator.py --element sample-element
         """
     )
     
@@ -981,14 +1108,24 @@ Examples:
         help='Generate documentation for a specific element only'
     )
     
+    parser.add_argument(
+        '--check',
+        action='store_true',
+        help='Check if documentation is up to date (returns exit code 1 if outdated)'
+    )
+    
     args = parser.parse_args()
     
     generator = DocumentationGenerator(
         stack_dir=args.stack_dir,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
+        check_mode=args.check
     )
     
-    if args.element:
+    if args.check:
+        # Check mode - verify docs are up to date
+        return generator.check_all_docs()
+    elif args.element:
         # Generate docs for specific element
         element_path = Path(args.stack_dir) / args.element
         if not element_path.exists():
