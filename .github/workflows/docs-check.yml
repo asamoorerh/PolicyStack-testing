@@ -44,9 +44,12 @@ jobs:
             exit 1
           fi
           
-          # Check if any files changed (excluding timestamp-only changes)
-          # Get list of modified files
-          CHANGED_FILES=$(git diff --name-only)
+          # Stage all files (including new ones) to detect them with git diff
+          git add -A
+          
+          # Check if any files changed (including new files, excluding timestamp-only changes)
+          # Get list of modified and new files
+          CHANGED_FILES=$(git diff --cached --name-only)
           
           if [ -z "$CHANGED_FILES" ]; then
             # No files changed at all
@@ -55,22 +58,34 @@ jobs:
           else
             # Files changed - check if it's only timestamps
             REAL_CHANGES=false
+            NEW_FILES=false
             
             for file in $CHANGED_FILES; do
-              # Check if the file has non-timestamp changes
-              # This filters out lines containing "Generated:" and compares
-              DIFF_WITHOUT_TIMESTAMP=$(git diff "$file" | grep -v "^\+.*Generated:" | grep -v "^\-.*Generated:" | grep "^[+-]" | grep -v "^+++\|^---" || true)
-              
-              if [ -n "$DIFF_WITHOUT_TIMESTAMP" ]; then
+              # Check if this is a new file
+              if ! git ls-tree HEAD --name-only | grep -q "^$file$"; then
+                echo "  Found new documentation file: $file" >> $GITHUB_STEP_SUMMARY
+                NEW_FILES=true
                 REAL_CHANGES=true
-                break
+              else
+                # Check if the file has non-timestamp changes
+                # This filters out lines containing "Generated:" and compares
+                DIFF_WITHOUT_TIMESTAMP=$(git diff --cached "$file" | grep -v "^\+.*Generated:" | grep -v "^\-.*Generated:" | grep "^[+-]" | grep -v "^+++\|^---" || true)
+                
+                if [ -n "$DIFF_WITHOUT_TIMESTAMP" ]; then
+                  REAL_CHANGES=true
+                fi
               fi
             done
             
             if [ "$REAL_CHANGES" = true ]; then
               echo "outdated=true" >> $GITHUB_OUTPUT
-              echo "## Files that need updating (ignoring timestamp changes):" >> $GITHUB_STEP_SUMMARY
-              git diff --name-only >> $GITHUB_STEP_SUMMARY
+              if [ "$NEW_FILES" = true ]; then
+                echo "## ⚠️ Missing Documentation Files Detected!" >> $GITHUB_STEP_SUMMARY
+                echo "New elements were added without documentation. The following files need to be created:" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "## Files that need updating (ignoring timestamp changes):" >> $GITHUB_STEP_SUMMARY
+              fi
+              git diff --cached --name-only >> $GITHUB_STEP_SUMMARY
             else
               echo "outdated=false" >> $GITHUB_OUTPUT
               echo "✅ Documentation is up to date (only timestamp changes detected)" >> $GITHUB_STEP_SUMMARY
