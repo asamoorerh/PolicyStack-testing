@@ -108,7 +108,7 @@ The installation is configured via the `./appset` helm chart.
 
 ```
 1. Configure `appset` values.yaml, see README for details
-2. helm install appset ./appset
+2. helm install appset ./appset -f ./appset/values.yaml -f values.yaml
 ```
 
 ## Overview
