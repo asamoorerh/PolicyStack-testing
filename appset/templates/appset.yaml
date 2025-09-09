@@ -23,7 +23,7 @@ spec:
               - path: 'stack/*'
   template:
     metadata:
-      name: '{{ "{{" }}.path.basenameNormalized{{ "}}" }}-{{ "{{"}}.name{{ "}}" }}'
+      name: '{{ "{{"}}.name{{ "}}" }}'
     spec:
       project: default
       source:
