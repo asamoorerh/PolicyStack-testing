@@ -28,7 +28,7 @@ stack:
       - name: external-secrets
         enabled: true
         description: "External Secrets Operator (Red Hat build)"
-        displayName: "External Secrets Operator"
+        displayName: "External Secrets Operator for Red Hat OpenShift"
         policyRef: eso-install
         severity: medium
         remediationAction: enforce
