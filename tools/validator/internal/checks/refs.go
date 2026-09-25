@@ -13,7 +13,7 @@ import (
 // are reported with different messages.
 type PolicyRefCheck struct{}
 
-func (PolicyRefCheck) ID() string  { return "POLICY010" }
+func (PolicyRefCheck) ID() string   { return "POLICY010" }
 func (PolicyRefCheck) Phase() Phase { return PhaseChart }
 
 func (c *PolicyRefCheck) Run(ctx Context) []Finding {

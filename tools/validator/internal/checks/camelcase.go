@@ -12,7 +12,7 @@ import (
 // policy-library renders no policies and reports no error.
 type CamelCaseCheck struct{}
 
-func (CamelCaseCheck) ID() string  { return "POLICY090" }
+func (CamelCaseCheck) ID() string   { return "POLICY090" }
 func (CamelCaseCheck) Phase() Phase { return PhaseChart }
 
 func (c *CamelCaseCheck) Run(ctx Context) []Finding {

@@ -50,8 +50,8 @@ type chartYaml struct {
 // Values is the typed view of `stack.<key>` plus the root-level fields the
 // validator needs. Only fields the checks inspect are modelled.
 type Values struct {
-	PolicyNamespace string             // from root values.yaml (not per element)
-	Component       *Component         // values.stack[stackKey]
+	PolicyNamespace string     // from root values.yaml (not per element)
+	Component       *Component // values.stack[stackKey]
 }
 
 // Component mirrors the per-element block under `stack.<key>`.

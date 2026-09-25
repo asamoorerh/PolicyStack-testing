@@ -16,7 +16,7 @@ func TestResolve_managedCluster(t *testing.T) {
 			Labels: map[string]string{
 				"config.example.com/environment.10": "prod",
 				"config.example.com/datacenter.20":  "dc1",
-				"unrelated":                          "x",
+				"unrelated":                         "x",
 			},
 		},
 	}
@@ -59,8 +59,8 @@ func TestResolve_localClusterHub(t *testing.T) {
 		Metadata: fixtures.Metadata{
 			Name: "local-cluster",
 			Labels: map[string]string{
-				"local-cluster":                     "true",
-				"config.example.com/datacenter.10":  "dc1",
+				"local-cluster":                    "true",
+				"config.example.com/datacenter.10": "dc1",
 			},
 		},
 	}

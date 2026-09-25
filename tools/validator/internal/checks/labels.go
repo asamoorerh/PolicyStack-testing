@@ -6,7 +6,7 @@ import "fmt"
 // cascade.Resolve against the fixture file.
 type LabelCheck struct{}
 
-func (LabelCheck) ID() string  { return "POLICY050" }
+func (LabelCheck) ID() string   { return "POLICY050" }
 func (LabelCheck) Phase() Phase { return PhaseCluster }
 
 func (c *LabelCheck) Run(ctx Context) []Finding {

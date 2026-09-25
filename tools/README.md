@@ -142,6 +142,9 @@ DocumentationGenerator
 ### Usage
 
 ```bash
+# Install the pinned dependencies
+pip install -r tools/requirements.txt
+
 # Generate documentation for all elements
 python tools/doc-generator.py
 
@@ -247,31 +250,9 @@ Lists all documented elements with links and provides comment notation guide.
 
 ## CI/CD Integration
 
-The repository includes GitHub Actions workflows for documentation automation:
-
-### docs-check.yml
-
-Validates documentation is up-to-date on pull requests:
-
-```yaml
-- Runs on PR when stack/values files change
-- Executes doc-generator.py
-- Compares output (ignoring timestamp changes)
-- Fails check if documentation needs updating
-- Posts status comment with update instructions
-```
-
-### docs-update.yml
-
-Auto-updates documentation when `update-docs` label is added:
-
-```yaml
-- Triggered by label addition
-- Runs documentation generator
-- Commits changes back to PR
-- Removes label after completion
-- Updates PR comment with status
-```
+`docs-check.yml` runs the generator tests and `doc-generator.py --check` on pull requests, failing
+when `docs/` is stale. Adding the `update-docs` label runs `docs-update.yml`, which regenerates and
+commits `docs/` to the PR branch. See [docs/workflows.md](../docs/workflows.md).
 
 ## Best Practices
 

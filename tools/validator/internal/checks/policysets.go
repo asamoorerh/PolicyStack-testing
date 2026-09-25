@@ -12,7 +12,7 @@ import (
 // still exists in ACM.
 type PolicySetCheck struct{}
 
-func (PolicySetCheck) ID() string  { return "POLICY040" }
+func (PolicySetCheck) ID() string   { return "POLICY040" }
 func (PolicySetCheck) Phase() Phase { return PhaseChart }
 
 func (c *PolicySetCheck) Run(ctx Context) []Finding {

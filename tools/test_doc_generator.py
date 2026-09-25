@@ -109,5 +109,31 @@ class AnnotationParsingTest(unittest.TestCase):
         self.assertIsNone(self.describe(values, "stack", "el", "undocumented"))
 
 
+class WriteIfChangedTest(unittest.TestCase):
+    OLD = "# el\n\n*Generated: 2026-01-01 00:00:00*\n\nbody\n"
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = Path(tmp.name) / "el.md"
+        self.gen = doc_generator.DocumentationGenerator(check_mode=True)
+
+    def test_writes_missing_file(self):
+        self.assertTrue(self.gen.write_if_changed(self.path, self.OLD))
+        self.assertEqual(self.path.read_text(), self.OLD)
+
+    def test_skips_timestamp_only_change(self):
+        self.path.write_text(self.OLD)
+        new = self.OLD.replace("2026-01-01 00:00:00", "2026-09-25 12:34:56")
+        self.assertFalse(self.gen.write_if_changed(self.path, new))
+        self.assertEqual(self.path.read_text(), self.OLD)
+
+    def test_writes_content_change(self):
+        self.path.write_text(self.OLD)
+        new = self.OLD.replace("body", "changed body")
+        self.assertTrue(self.gen.write_if_changed(self.path, new))
+        self.assertEqual(self.path.read_text(), new)
+
+
 if __name__ == "__main__":
     unittest.main()

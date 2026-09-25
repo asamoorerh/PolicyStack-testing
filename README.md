@@ -91,7 +91,7 @@ This automation ensures your PolicyStack documentation remains accurate, compreh
 
 ### Validation
 
-`tools/validator` renders every element for each test cluster in `tools/validator/testdata/clusters`, using the same values cascade as the ApplicationSet, and checks the result. CI runs it on every pull request.
+`tools/validator` renders every element for each test cluster in `tools/validator/testdata/clusters`, using the same values cascade as the ApplicationSet, and checks the result. CI runs it on pull requests that change charts, values or the validator.
 
 Requires Go and `helm`. `kubeconform` is optional; without it, POLICY080 is skipped.
 
@@ -118,6 +118,8 @@ warning POLICY021 [metallb] converters/metallb-cr.yaml is not referenced by any 
 Exit codes: `0` no errors, `1` errors found (warnings too with `--severity warning`), `2` the validator itself failed.
 
 Useful flags: `--only` and `--skip` take comma-separated rule IDs, `--github` emits pull request annotations, and `-v` enables debug logging. The rules are listed in [tools/validator/README.md](tools/validator/README.md#rules).
+
+The pull request workflows that run the validator and keep `docs/` current are described in [docs/workflows.md](docs/workflows.md).
 
 ## Values File Structure for GitOps
 
@@ -233,7 +235,7 @@ A starting point, not a complete configuration. Copy and rename them to match yo
 | `values/clusters/nonprod-west-1.yaml` | A managed nonprod cluster using the dc2 site values |
 
 `prod-east-1` and `nonprod-west-1` match the validator fixtures in `tools/validator/testdata/clusters`,
-so CI renders them on every pull request.
+so CI renders them whenever charts or values change.
 
 ## How Values Files Are Merged
 

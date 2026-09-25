@@ -72,21 +72,21 @@ type Check interface {
 // All returns the registered checks in stable order.
 func All() []Check {
 	return []Check{
-		&NameLengthCheck{},     // POLICY001
-		&DuplicateNameCheck{},  // POLICY002
-		&SubPolicyNameCheck{},  // POLICY003
-		&PolicyRefCheck{},      // POLICY010
-		&DependencyCheck{},     // POLICY011
+		&NameLengthCheck{},       // POLICY001
+		&DuplicateNameCheck{},    // POLICY002
+		&SubPolicyNameCheck{},    // POLICY003
+		&PolicyRefCheck{},        // POLICY010
+		&DependencyCheck{},       // POLICY011
 		&MissingConverterCheck{}, // POLICY020
 		&UnusedConverterCheck{},  // POLICY021
-		&EnumCheck{},           // POLICY030
-		&DeadKeyCheck{},        // POLICY031
-		&PolicySetCheck{},      // POLICY040
-		&LabelCheck{},          // POLICY050
-		&PinningCheck{},        // POLICY060
-		&LintCheck{},           // POLICY070 (Runner set by run.buildRegistry)
-		&KubeconformCheck{},    // POLICY080 (Bin, SchemasDir set by run.buildRegistry)
-		&CamelCaseCheck{},      // POLICY090
-		&RenderCheck{},         // RENDER000
+		&EnumCheck{},             // POLICY030
+		&DeadKeyCheck{},          // POLICY031
+		&PolicySetCheck{},        // POLICY040
+		&LabelCheck{},            // POLICY050
+		&PinningCheck{},          // POLICY060
+		&LintCheck{},             // POLICY070 (Runner set by run.buildRegistry)
+		&KubeconformCheck{},      // POLICY080 (Bin, SchemasDir set by run.buildRegistry)
+		&CamelCaseCheck{},        // POLICY090
+		&RenderCheck{},           // RENDER000
 	}
 }

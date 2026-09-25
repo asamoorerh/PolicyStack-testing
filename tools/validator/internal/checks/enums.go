@@ -19,7 +19,7 @@ var (
 // severity, remediationAction, complianceType and upgradeApproval.
 type EnumCheck struct{}
 
-func (EnumCheck) ID() string  { return "POLICY030" }
+func (EnumCheck) ID() string   { return "POLICY030" }
 func (EnumCheck) Phase() Phase { return PhaseChart }
 
 func (c *EnumCheck) Run(ctx Context) []Finding {

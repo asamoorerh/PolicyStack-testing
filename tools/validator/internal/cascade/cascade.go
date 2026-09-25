@@ -9,10 +9,10 @@
 //  1. element defaults       <element>/values.yaml
 //  2. global root            <repoRoot>/values.yaml
 //  3. label-driven entries   <values>/<category>s/<value>.yaml, in ascending
-//                            priority order (higher priority overrides)
+//     priority order (higher priority overrides)
 //  4. cluster-specific       hub: <values>/acm/acm-<dc>.yaml then
-//                                  <values>/clusters/acm-<dc>.yaml
-//                            else: <values>/clusters/<cluster-name>.yaml
+//     <values>/clusters/acm-<dc>.yaml
+//     else: <values>/clusters/<cluster-name>.yaml
 //
 // Missing files are skipped, matching the appset's ignoreMissingValueFiles: true.
 package cascade
@@ -39,8 +39,8 @@ type Resolved struct {
 	// ValueFiles is the ordered list of -f arguments (absolute paths).
 	ValueFiles []string
 	// IsLocalHub is metadata.labels["local-cluster"] == "true".
-	IsLocalHub bool
-	Datacenter string
+	IsLocalHub  bool
+	Datacenter  string
 	Environment string
 	// LabelIssues lists malformed config labels. POLICY050 reports them.
 	LabelIssues []LabelIssue

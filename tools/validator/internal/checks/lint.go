@@ -13,7 +13,7 @@ type LintCheck struct {
 	Runner *render.Runner
 }
 
-func (LintCheck) ID() string  { return "POLICY070" }
+func (LintCheck) ID() string   { return "POLICY070" }
 func (LintCheck) Phase() Phase { return PhaseChart }
 
 func (c *LintCheck) Run(ctx Context) []Finding {

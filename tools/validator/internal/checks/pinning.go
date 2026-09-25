@@ -10,7 +10,7 @@ import (
 // policy-library versions.
 type PinningCheck struct{}
 
-func (PinningCheck) ID() string  { return "POLICY060" }
+func (PinningCheck) ID() string   { return "POLICY060" }
 func (PinningCheck) Phase() Phase { return PhaseRepo }
 
 func (c *PinningCheck) Run(ctx Context) []Finding {

@@ -4,7 +4,7 @@ package checks
 // failures. run.Run produces the findings; Run is a no-op.
 type RenderCheck struct{}
 
-func (RenderCheck) ID() string  { return "RENDER000" }
+func (RenderCheck) ID() string   { return "RENDER000" }
 func (RenderCheck) Phase() Phase { return PhaseCluster }
 
 func (c *RenderCheck) Run(_ Context) []Finding { return nil }

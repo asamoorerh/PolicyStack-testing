@@ -62,11 +62,11 @@ func alreadyDownloaded(elementDir string) bool {
 
 // TemplateResult is the captured output of a helm template invocation.
 type TemplateResult struct {
-	Stdout    []byte
-	Err       error  // non-nil if helm exited non-zero or the command failed to start
-	Stderr    string // helm's stderr, trimmed
-	ErrFile   string // file extracted from "Error: ... in \"<file>\" line N"
-	ErrLine   int
+	Stdout  []byte
+	Err     error  // non-nil if helm exited non-zero or the command failed to start
+	Stderr  string // helm's stderr, trimmed
+	ErrFile string // file extracted from "Error: ... in \"<file>\" line N"
+	ErrLine int
 }
 
 // Template runs `helm template <release> <element> -f <values...>`.

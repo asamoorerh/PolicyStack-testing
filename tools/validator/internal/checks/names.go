@@ -31,7 +31,7 @@ const MaxPolicyNameLen = 63
 // release-name = <chart-name>-<cluster>, set by appset.yaml.
 type NameLengthCheck struct{}
 
-func (NameLengthCheck) ID() string  { return "POLICY001" }
+func (NameLengthCheck) ID() string   { return "POLICY001" }
 func (NameLengthCheck) Phase() Phase { return PhaseCluster }
 
 func (c *NameLengthCheck) Run(ctx Context) []Finding {
@@ -121,7 +121,7 @@ func (c *NameLengthCheck) Run(ctx Context) []Finding {
 // by POLICY003 (sub-policy templates).
 type DuplicateNameCheck struct{}
 
-func (DuplicateNameCheck) ID() string { return "POLICY002" }
+func (DuplicateNameCheck) ID() string   { return "POLICY002" }
 func (DuplicateNameCheck) Phase() Phase { return PhaseCluster }
 
 func (c *DuplicateNameCheck) Run(ctx Context) []Finding {

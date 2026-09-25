@@ -16,7 +16,7 @@ type KubeconformCheck struct {
 	Extra      []string // additional CLI args
 }
 
-func (KubeconformCheck) ID() string  { return "POLICY080" }
+func (KubeconformCheck) ID() string   { return "POLICY080" }
 func (KubeconformCheck) Phase() Phase { return PhaseCluster }
 
 func (c *KubeconformCheck) Run(ctx Context) []Finding {

@@ -235,7 +235,14 @@ class DocumentationGenerator:
         normalized_existing = self.normalize_timestamp(existing_content)
         normalized_new = self.normalize_timestamp(new_content)
         return normalized_existing == normalized_new
-    
+
+    def write_if_changed(self, path: Path, content: str) -> bool:
+        """Write content unless the file already matches it apart from the timestamp"""
+        if path.exists() and self.compare_content(path.read_text(), content):
+            return False
+        path.write_text(content)
+        return True
+
     def to_camel_case(self, name: str) -> str:
         """Convert kebab-case to camelCase"""
         parts = name.split('-')
@@ -1093,11 +1100,12 @@ class DocumentationGenerator:
                 
                 if doc_content:
                     output_file = self.output_dir / f"{element_path.name}.md"
-                    with open(output_file, 'w') as f:
-                        f.write(doc_content)
-                    
+                    if self.write_if_changed(output_file, doc_content):
+                        print(f"  ✓ Generated documentation: {output_file}")
+                    else:
+                        print(f"  ✓ Unchanged: {output_file}")
+
                     generated.append(element_path.name)
-                    print(f"  ✓ Generated documentation: {output_file}")
                 else:
                     print(f"  ⚠ No valid configuration found for {element_path.name}")
         
@@ -1110,9 +1118,7 @@ class DocumentationGenerator:
         """Generate an index file listing all documented elements"""
         index_file = self.output_dir / "README.md"
         content = self._generate_index_content(sorted(elements))
-        
-        with open(index_file, 'w') as f:
-            f.write(content)
+        self.write_if_changed(index_file, content)
 
 
 def main():
@@ -1179,8 +1185,7 @@ Examples:
         if doc_content:
             output_file = Path(args.output_dir) / f"{args.element}.md"
             output_file.parent.mkdir(exist_ok=True)
-            with open(output_file, 'w') as f:
-                f.write(doc_content)
+            generator.write_if_changed(output_file, doc_content)
             print(f"✓ Generated documentation: {output_file}")
         else:
             print(f"No valid configuration found for {args.element}")
