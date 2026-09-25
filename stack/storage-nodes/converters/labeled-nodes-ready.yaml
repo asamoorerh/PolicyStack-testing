@@ -1,0 +1,45 @@
+{{- /*
+Readiness for the label-existing-nodes path.
+
+machineset-ready.yaml only asserts readyReplicas on MachineSets named "<infra>-storage-*". The
+baremetal/label path never creates any, so that check finds nothing and reports Compliant
+immediately - which makes the `ready` policy a vacuous gate, and anything depending on it (notably
+openshift-data-foundation) proceeds before the nodes are actually designated.
+
+This asserts the real thing: that config.replicas nodes carrying the storage label are Ready. Until
+they are, it forces NonCompliant with a mustnothave on an object that always exists - the same
+technique the openshift-upgrade element uses, because a ConfigurationPolicy cannot assert a count.
+
+Both readiness converters are harmless when not applicable: each renders an empty list, which the
+chart emits as [].
+*/ -}}
+{{- $cfg := .Values.stack.storageNodes.config }}
+{{ "{{" }}- $ready := list {{ "}}" }}
+{{ "{{" }}- range $n := (lookup "v1" "Node" "" "").items {{ "}}" }}
+{{ "{{" }}-   if hasKey $n.metadata.labels "{{ .Parameters.readyLabel }}" {{ "}}" }}
+{{ "{{" }}-     range $c := $n.status.conditions {{ "}}" }}
+{{ "{{" }}-       if and (eq $c.type "Ready") (eq $c.status "True") {{ "}}" }}{{ "{{" }}- $ready = append $ready $n.metadata.name {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
+{{ "{{" }}-     end {{ "}}" }}
+{{ "{{" }}-   end {{ "}}" }}
+{{ "{{" }}- end {{ "}}" }}
+{{ "{{" }}- if lt (len $ready) {{ $cfg.replicas }} {{ "}}" }}
+- complianceType: mustnothave
+  objectDefinition:
+    apiVersion: config.openshift.io/v1
+    kind: Infrastructure
+    metadata:
+      name: cluster
+{{ "{{" }}- else {{ "}}" }}
+{{ "{{" }}- range $name := $ready {{ "}}" }}
+- complianceType: musthave
+  objectDefinition:
+    apiVersion: v1
+    kind: Node
+    metadata:
+      name: {{ "{{" }} $name {{ "}}" }}
+    status:
+      conditions:
+        - type: Ready
+          status: "True"
+{{ "{{" }}- end {{ "}}" }}
+{{ "{{" }}- end {{ "}}" }}

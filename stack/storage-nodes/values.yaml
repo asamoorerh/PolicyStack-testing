@@ -131,3 +131,25 @@ stack:
           - name: machineset-ready
         enableTemplateParameters: true
         templateParameters: *storageParams
+
+      # @description: Readiness for the label-existing-nodes path, where no storage MachineSets
+      # @description: exist and machineset-ready would otherwise report Compliant with nothing
+      # @description: checked. Asserts that config.replicas labelled nodes are actually Ready.
+      - name: labeled-nodes
+        enabled: true
+        description: "Labelled storage nodes are Ready"
+        policyRef: ready
+        complianceType: musthave
+        remediationAction: inform
+        severity: medium
+        rawTemplate: true
+        templateNames:
+          - name: labeled-nodes-ready
+        enableTemplateParameters: true
+        templateParameters:
+          role: storage
+          namespace: openshift-machine-api
+          readyLabel: cluster.ocs.openshift.io/openshift-storage
+          nodeLabels:
+            node-role.kubernetes.io/infra: ""
+            cluster.ocs.openshift.io/openshift-storage: ""

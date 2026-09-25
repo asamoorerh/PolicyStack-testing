@@ -1,69 +1,149 @@
-# Per-cluster values for the ACM hub in dc1.
+# Per-cluster values for the AWS test cluster.
 #
-# This file is selected for the hub because the ManagedCluster carries local-cluster="true", which
-# makes the ApplicationSet resolve values/acm/acm-<datacenter>.yaml and this file instead of
-# values/clusters/<clusterName>.yaml. The Helm release becomes <element>-acm-dc1.
+# !! RENAME THIS FILE to match the ManagedCluster name exactly:
+#      oc get managedcluster
+#      git mv values/clusters/aws-prod.yaml values/clusters/<that-name>.yaml
+#    The ApplicationSet runs with ignoreMissingValueFiles, so a filename that does not match the
+#    cluster is silently skipped - none of the elements below would turn on and the test would look
+#    like it simply did nothing. Verify with the render command in the notes at the bottom.
 #
-# Required labels on the local-cluster ManagedCluster (the ApplicationSet fails without them):
-#   git.example.com/revision=<branch-or-tag>   # REQUIRED; no "/" allowed in a label value
-#   config.example.com/environment.10=prod
-#   config.example.com/datacenter.20=dc1
-#   config.example.com/platform.30=baremetal
-#   clusterID=<uuid>                           # set by ACM on OpenShift clusters
+# Labels this cluster needs:
+#   git.example.com/revision=<branch-or-tag>    # REQUIRED, no "/" in a label value
+#   config.example.com/environment.10=prod      # reuses values/environments/prod.yaml
+#   config.example.com/datacenter.20=<dc>
+#   config.example.com/platform.30=aws
 #
-# On top of the prod baseline in values/environments/prod.yaml, this cluster runs:
+# On top of the prod baseline (cert-manager CA, external-secrets, compliance scan,
+# manual-remediations, cluster DNS), this cluster tests what bare metal could not.
 stack:
-  # Node labelling for hardware features. The NodeFeatureDiscovery CR waits on the operator's CSV.
-  nodeFeatureDiscovery:
+
+  # --- newly testable now that a default StorageClass exists -------------------------------------
+
+  # Prometheus/Thanos PVCs finally bind. Exercises the converter that merges into the existing
+  # cluster-monitoring-config rather than replacing it, plus the dict-built UWM config.
+  # StorageClass is pinned rather than left to the cluster default, so the test stays deterministic
+  # even while ODF is installing.
+  userWorkloadMonitoring:
+    enabled: true
+    config:
+      storageClass: gp3-csi
+      prometheus:
+        retention: 24h
+        storage: 10Gi
+      thanosRuler:
+        retention: 24h
+        storage: 5Gi
+      alertmanager:
+        enabled: false
+
+  # On bare metal this rendered an empty list because there are no MachineSets. On AWS it generates
+  # one MachineHealthCheck per worker MachineSet, which exercises the runtime lookup loop.
+  # NOTE: an unhealthy worker now gets REPLACED, and ODF OSDs live on workers here - maxUnhealthy
+  # (40%) is what stops that cascading.
+  machineHealthChecks:
     enabled: true
 
-  # Drain/uncordon support for maintenance windows.
-  nodeMaintenance:
-    enabled: true
+  # --- storage chain: the only thing that exercises cross-element dependencies for real ----------
 
-  # Tekton.
-  openshiftPipelines:
+  # Designate three existing workers as storage nodes rather than creating new MachineSets.
+  # values/platforms/aws.yaml turns the `aws` toggle on, which would build new EC2 instances; this
+  # overrides it to the label-existing-nodes path instead. The toggle is named `baremetal` because
+  # that is the platform where it is normally needed - the behaviour is "label what is already
+  # here", which is what we want on AWS too.
+  storageNodes:
     enabled: true
+    toggles:
+      aws: false
+      vmware: false
+      baremetal: true
+      ready: true
+    config:
+      # How many existing workers to designate. The converter prefers dedicated workers and will
+      # not pick control-plane nodes; set config.nodes explicitly to choose them by name.
+      replicas: 3
 
-  # Serves the console plugins used by the logging and tracing UIs.
-  clusterObservability:
+  # Deliberately tiny: 1 device set x 3 replicas x 100Gi = 300Gi of gp3, rather than the 12TiB the
+  # element ships as a production default. `lean` keeps the Ceph pods small too.
+  openshiftDataFoundation:
     enabled: true
+    config:
+      resourceProfile: lean
+      deviceSet:
+        count: 1
+        replicas: 3
+        size: 100Gi
+        storageClassName: gp3-csi
+      # Leave gp3-csi as the cluster default. The storageclass policy still runs - it relabels every
+      # StorageClass - so the rawTemplate loop is exercised without changing cluster behaviour
+      # mid-test. Flip to ocs-storagecluster-ceph-rbd once ODF is healthy if you want that too.
+      defaultStorageClass: gp3-csi
+      csiOnAllNodes: true
 
-  # Logging operator only. The LokiStack, log forwarder and logging UI all live in the `loki`
-  # element, which needs ODF object storage - see "deliberately off" below.
+  # Needed by loki for the ClusterLogForwarder CRD.
   openshiftLogging:
     enabled: true
 
-# Deliberately off on this cluster, and why. Each is a one-line `enabled: true` when the blocker
-# clears, so this doubles as the backlog.
+  # Needed by loki for the console logging UI plugin.
+  clusterObservability:
+    enabled: true
+
+  # The payoff: loki proves three cross-element `element:` dependencies at once -
+  #   stack            -> ready@openshift-data-foundation
+  #   forwarder        -> install@openshift-logging
+  #   observability-ui -> install@cluster-observability
+  # and its chunks land in a NooBaa bucket from ODF.
+  loki:
+    enabled: true
+    toggles:
+      forwarder: true
+      observability-ui: true
+    config:
+      # Smallest supported LokiStack; intended for exactly this kind of test.
+      size: 1x.demo
+      storageClass: gp3-csi
+
+  # --- already proven on the hub, cheap to run again --------------------------------------------
+  nodeFeatureDiscovery:
+    enabled: true
+  nodeMaintenance:
+    enabled: true
+  openshiftPipelines:
+    enabled: true
+
+  # --- operator installs, to widen coverage of the OperatorPolicy path --------------------------
+  kiali:
+    enabled: true
+  tempo:
+    enabled: true
+  opentelemetry:
+    enabled: true
+  servicemesh3operator:
+    enabled: true
+  trustedArtifactSigner:
+    enabled: true
+  developerHub:
+    enabled: true
+  devSpaces:
+    enabled: true
+
+  # Operator plus a light operand, so the waitForOperator gate gets exercised.
+  mtv:
+    enabled: true
+  nmstate:
+    enabled: true
+    toggles:
+      # NNCPs change host networking; leave them off on a cloud cluster.
+      nncp: false
+
+# Deliberately off, and why:
 #
-# No object storage (3-node compact, no spare disks):
-#   storageNodes, localStorage, openshiftDataFoundation - nothing to back Ceph with.
-#   loki, openshiftImageRegistry (s3 mode), servicemesh3Ambient (tracing) and the ACM
-#   observability toggle all depend on openshiftDataFoundation's `ready` policy, so enabling any of
-#   them now would leave a Policy sitting Pending forever.
-#
-# No default StorageClass:
-#   userWorkloadMonitoring - its Prometheus, Thanos Ruler and Alertmanager configs always request
-#   PVCs, so without a StorageClass the statefulsets stay Pending. Enable it once storage exists, or
-#   after adding a StorageClass from some other source.
-#
-# Reboots the control plane:
-#   masterNodes - the KubeletConfig triggers a MachineConfig rollout, which on a 3-node compact
-#   cluster is a rolling reboot of all three control-plane nodes. Fine to enable, but do it in a
-#   window rather than as part of a first smoke test.
-#   workloadPartitioning - same rollout, and it needs reservedCpus/isolatedCpus computed for this
-#   hardware. The render fails loudly if they are unset rather than guessing.
-#
-# Nothing to act on:
-#   infraNodes, workerNodes - no separate worker pool on a compact cluster.
-#   machineHealthChecks - generates one check per MachineSet, and bare metal has none.
-#   openshiftUpgrade - leave off until you actually want a version pinned or driven.
-#
-# Hub self-management (see values/acm/acm-dc1.yaml):
-#   advancedClusterManagement, openshiftGitops.
-#
-# Heavier operators, off to keep the first run readable rather than for any technical reason:
-#   advancedClusterSecurity, ansibleAutomationPlatform, quay, openshiftVirtualization, mtv, lvm,
-#   metallb, nmstate, kiali, tempo, opentelemetry, servicemesh3operator, devSpaces, developerHub,
-#   trustedArtifactSigner, gitopsDev.
+#   servicemesh3-ambient  - installs IstioCNI and ztunnel, which changes cluster networking. The
+#                           four operators it depends on are enabled above, so turning this on is a
+#                           one-liner when you want it (and it adds a 5-way cross-element test).
+#   openshiftImageRegistry - the AWS installer already backs the registry with real S3. Switching it
+#                           to a NooBaa bucket is a storage migration, not a config test.
+#   certManager api-cert / ingress-cert, workerNodes kubelet, compliance remediate,
+#   infraNodes, workloadPartitioning, openshiftUpgrade - held back by choice.
+#   advancedClusterManagement / openshiftGitops - hub-only, and the hub has no ODF.
+#   openshiftVirtualization - needs metal instances on AWS.
+#   localStorage, lvm       - no extra disks; ODF consumes gp3-csi directly here.
