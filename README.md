@@ -89,6 +89,36 @@ Documentation is generated as markdown files in the `docs/` directory (or specif
 
 This automation ensures your PolicyStack documentation remains accurate, comprehensive, and aligned with your actual configurations, making it easier for teams to understand, audit, and maintain your cluster policies.
 
+### Validation
+
+`tools/validator` renders every element for each test cluster in `tools/validator/testdata/clusters`, using the same values cascade as the ApplicationSet, and checks the result. CI runs it on every pull request.
+
+Requires Go and `helm`. `kubeconform` is optional; without it, POLICY080 is skipped.
+
+```sh
+make -C tools/validator build
+tools/validator/bin/policystack-validator --repo-root . --extra-values tools/validator/testdata/baseline.yaml
+```
+
+`baseline.yaml` supplies the `selector` that the ApplicationSet passes in at runtime.
+
+A clean run prints `ok: no findings`. Otherwise each finding gives its severity, rule, element, and the file and line to fix:
+
+```
+error POLICY020 [metallb] configPolicies[0] "metallb-instance" references templateNames[0] "metallb-crd" but converters/metallb-crd.yaml does not exist
+    at /path/to/policystack/stack/metallb/values.yaml:107:19
+error POLICY030 [kiali] policies[0].severity = "hgh"; allowed: [low medium high critical]
+    at /path/to/policystack/stack/kiali/values.yaml:22:19
+warning POLICY021 [metallb] converters/metallb-cr.yaml is not referenced by any templateNames[].name
+    at /path/to/policystack/stack/metallb/converters/metallb-cr.yaml:1
+
+2 error(s), 1 warning(s)
+```
+
+Exit codes: `0` no errors, `1` errors found (warnings too with `--severity warning`), `2` the validator itself failed.
+
+Useful flags: `--only` and `--skip` take comma-separated rule IDs, `--github` emits pull request annotations, and `-v` enables debug logging. The rules are listed in [tools/validator/README.md](tools/validator/README.md#rules).
+
 ## Values File Structure for GitOps
 
 This document explains how values files are organized and merged in this GitOps implementation using Argo CD ApplicationSets.
