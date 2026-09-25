@@ -84,7 +84,7 @@ from the chart name, so this file is byte-identical in infra-nodes and storage-n
                 - filters:
                     - name: 'tag:Name'
                       values:
-                        - {{ "{{" }} (index (index $pv.securityGroups 0).filters 0).values 0 {{ "}}" }}
+                        - {{ "{{" }} index (index (index $pv.securityGroups 0).filters 0).values 0 {{ "}}" }}
               subnet:
                 filters:
                   - name: 'tag:Name'

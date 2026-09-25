@@ -22,9 +22,12 @@ are taken. Which nodes exist is a runtime fact, so the selection stays ACM templ
 {{ "{{" }}-   end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- if eq 0 (len $workers) {{ "}}" }}{{ "{{" }}- $workers = (lookup "v1" "Node" "" "").items {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
-{{ "{{" }}- range $i := until (min {{ $cfg.replicas }} (len $workers)) {{ "}}" }}
-{{ "{{" }}-   $chosen = append $chosen (index $workers $i) {{ "}}" }}
-{{ "{{" }}- end {{ "}}" }}
+{{ "{{" }}- /* Cap with slice rather than `until (min ...)`: sprig's min returns an int64 and until
+     wants an int, which fails at evaluation time with "expected int; got int64" - invisible to
+     helm template and to the validator, because only ACM ever runs this. slice is a plain Go
+     template builtin and needs no arithmetic. */ -}}
+{{ "{{" }}- $chosen = $workers {{ "}}" }}
+{{ "{{" }}- if gt (len $chosen) {{ $cfg.replicas }} {{ "}}" }}{{ "{{" }}- $chosen = slice $chosen 0 {{ $cfg.replicas }} {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
 {{- end }}
 {{ "{{" }}- range $node := $chosen {{ "}}" }}
 - complianceType: musthave

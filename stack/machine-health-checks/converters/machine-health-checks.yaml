@@ -11,7 +11,7 @@ disruptive than replacing a worker.
 {{- $cfg := .Values.stack.machineHealthChecks.config }}
 {{ "{{" }}- $machinesets := (lookup "machine.openshift.io/v1beta1" "MachineSet" "{{ .Parameters.namespace }}" "").items {{ "}}" }}
 {{ "{{" }}- range $ms := $machinesets {{ "}}" }}
-{{ "{{" }}-   $role := index $ms.spec.template.metadata.labels "machine.openshift.io/cluster-api-machine-role" {{ "}}" }}
+{{ "{{" }}-   $role := index (($ms.spec.template.metadata).labels | default dict) "machine.openshift.io/cluster-api-machine-role" {{ "}}" }}
 {{ "{{" }}-   $name := $ms.metadata.name {{ "}}" }}
 {{ "{{" }}-   $isStorage := hasKey ($ms.spec.template.spec.metadata.labels | default dict) "cluster.ocs.openshift.io/openshift-storage" {{ "}}" }}
 {{ "{{" }}-   $isWorker := and (eq $role "worker") (not $isStorage) {{ "}}" }}
