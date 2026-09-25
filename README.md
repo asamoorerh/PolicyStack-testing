@@ -141,7 +141,7 @@ Currently, there is a single label for any kind of git configuration.
 `git.example.com/revision`: This is used to specify the revision name for the cluster. This could be a tag or branch name.
 ***NOTE***: branch names/tags cannot have forward slashes in them. Labels in Kubernetes cannot contain forward slashes in label values. 
 
-This configuration allows for addition of new values without the need to change the ApplicationSet. Now, if `tenant` values are needed, then `config.example.com/tenant.3=tenant1` can be added to a cluster. This would allow `../../values/tenant/tenant1.yaml` to be created.
+This configuration allows for addition of new values without the need to change the ApplicationSet. Now, if `tenant` values are needed, then `config.example.com/tenant.3=tenant1` can be added to a cluster. This would allow `../../values/tenants/tenant1.yaml` to be created; the ApplicationSet appends `s` to the type for the directory name. See `values/tenants/payments.yaml`.
 ***NOTE***: Not every values file needs to be created. See [here](#missing-values-files) for more information.
 ## Values File Hierarchy
 
@@ -151,7 +151,7 @@ Values files are loaded in a specific, but dynamic, order, with later files over
 2. `../../values.yaml` - Global values across all applications
 3. `../../values/environments/<environment>.yaml` - Environment-specific values
 4. `../../values/datacenters/<datacenter>.yaml` - Datacenter-specific values
-5. `../../values/<type>/<value>.yaml` - Dynamically generated values based on the above mentioned config labels. See [here](#config-labels). Priority 3 will come after datacenter and 4 will have more priority over 3
+5. `../../values/<type>s/<value>.yaml` - Dynamically generated values based on the above mentioned config labels. See [here](#config-labels). Priority 3 will come after datacenter and 4 will have more priority over 3
 6. Cluster-specific values (depends on cluster type):
    - For local-clusters (ACM hub):
      - `../../values/acm/acm-<datacenter>.yaml`
@@ -177,7 +177,7 @@ repository/
     │   ├── dc1.yaml # (4) Datacenter-specific values for dc1
     │   ├── dc2.yaml
     |   └── ...
-    ├── <type>/
+    ├── <type>s/
     │   ├── <value>.yaml # (4) Dynamic values specified by labels. 
     ├── acm/
     │   ├── acm-dc1.yaml # (5a) ACM specific values for dc1
@@ -187,6 +187,23 @@ repository/
         ├── cluster1.yaml # (5c) Cluster-specific values for cluster1
         └── cluster2.yaml
 ```
+
+### Example Values Files
+
+A starting point, not a complete configuration. Copy and rename them to match your clusters and sites.
+
+| File | Shows |
+| ---- | ----- |
+| `values/environments/prod.yaml` | Baseline every prod cluster gets |
+| `values/datacenters/dc2.yaml` | Site facts (mirror registry allowlist); turns no element on |
+| `values/platforms/<platform>.yaml` | Platform toggles for the node elements |
+| `values/tenants/payments.yaml` | A custom label category |
+| `values/acm/acm-dc1.yaml`, `values/clusters/acm-dc1.yaml` | The ACM hub |
+| `values/clusters/prod-east-1.yaml` | A managed prod cluster on AWS |
+| `values/clusters/nonprod-west-1.yaml` | A managed nonprod cluster using the dc2 site values |
+
+`prod-east-1` and `nonprod-west-1` match the validator fixtures in `tools/validator/testdata/clusters`,
+so CI renders them on every pull request.
 
 ## How Values Files Are Merged
 
