@@ -2,7 +2,7 @@
 
 > OpenShift GitOps operator and the platform ArgoCD instance
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -211,13 +211,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: console
+###### ⚙️ Config: argocd-console
 > ArgoCD console link
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `link-console` | Configuration policy identifier |
+| Name | `link-argocd-console` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `low` | Severity level |

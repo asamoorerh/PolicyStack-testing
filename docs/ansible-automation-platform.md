@@ -2,7 +2,7 @@
 
 > Ansible Automation Platform: controller, hub, EDA and Lightspeed
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -303,13 +303,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: console
+###### ⚙️ Config: aap-console
 > AAP console link
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `link-console` | Configuration policy identifier |
+| Name | `link-aap-console` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `low` | Severity level |

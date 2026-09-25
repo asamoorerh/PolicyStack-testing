@@ -2,7 +2,7 @@
 
 > Element for the OpenShift Logging. This installs and configures OpenShift Logging.
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 

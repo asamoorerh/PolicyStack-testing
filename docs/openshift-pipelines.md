@@ -2,7 +2,7 @@
 
 > OpenShift Pipelines (Tekton) Operator
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 

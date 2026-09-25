@@ -2,7 +2,7 @@
 
 > Red Hat build of OpenTelemetry for distributed tracing
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:18*
 
 ## Component Configuration
 
@@ -45,13 +45,13 @@ Default policy metadata applied unless overridden per-policy
 
 ##### Configuration Policies
 
-###### ⚙️ Config: ns-monitoring
+###### ⚙️ Config: opentelemetry-ns-monitoring
 > Adds openshift.io/cluster-monitoring label to the operator namespace
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `install-ns-monitoring` | Configuration policy identifier |
+| Name | `install-opentelemetry-ns-monitoring` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `low` | Severity level |

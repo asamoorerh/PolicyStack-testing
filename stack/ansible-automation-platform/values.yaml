@@ -174,7 +174,7 @@ stack:
           s3Secret: s3-aap-odf
           caBundleSecret: user-ca-bundle
 
-      - name: console
+      - name: aap-console
         enabled: true
         description: "AAP console link"
         policyRef: link

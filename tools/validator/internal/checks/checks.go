@@ -76,6 +76,7 @@ func All() []Check {
 	return []Check{
 		&NameLengthCheck{},     // POLICY001
 		&DuplicateNameCheck{},  // POLICY002
+		&SubPolicyNameCheck{},  // POLICY003
 		&PolicyRefCheck{},      // POLICY010
 		&DependencyCheck{},     // POLICY011
 		&MissingConverterCheck{}, // POLICY020

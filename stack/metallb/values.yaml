@@ -95,7 +95,7 @@ stack:
         upgradeApproval: Automatic
 
     configPolicies:
-      - name: instance
+      - name: metallb-instance
         enabled: true
         description: "MetalLB instance"
         policyRef: config

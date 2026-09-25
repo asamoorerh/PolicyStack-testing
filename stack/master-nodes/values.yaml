@@ -38,7 +38,7 @@ stack:
         disabled: false
 
     configPolicies:
-      - name: kubelet
+      - name: master-kubelet
         enabled: true
         description: "KubeletConfig for the master pool"
         policyRef: config

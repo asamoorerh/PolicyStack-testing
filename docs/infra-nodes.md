@@ -2,7 +2,7 @@
 
 > Dedicated infra nodes, and moving platform workloads onto them
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -134,13 +134,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: kubelet
+###### ⚙️ Config: infra-kubelet
 > KubeletConfig for the infra pool
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `config-kubelet` | Configuration policy identifier |
+| Name | `config-infra-kubelet` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -189,13 +189,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: machinesets-aws
+###### ⚙️ Config: infra-machinesets
 > Infra MachineSets cloned from the worker MachineSet
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `aws-machinesets-aws` | Configuration policy identifier |
+| Name | `aws-infra-machinesets` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -246,13 +246,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: machinesets-vmware
+###### ⚙️ Config: infra-machinesets
 > Infra MachineSets per vSphere failure domain
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `vmware-machinesets-vmware` | Configuration policy identifier |
+| Name | `vmware-infra-machinesets` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -295,13 +295,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: nodes-ready
+###### ⚙️ Config: infra-replicas
 > Infra MachineSet readiness
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `ready-nodes-ready` | Configuration policy identifier |
+| Name | `ready-infra-replicas` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `inform` | Remediation action |
 | Severity | `medium` | Severity level |

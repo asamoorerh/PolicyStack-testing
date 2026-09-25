@@ -2,7 +2,7 @@
 
 > Worker node sizing and kubelet tuning
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:18*
 
 ## Component Configuration
 
@@ -73,13 +73,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 ##### Configuration Policies
 
-###### ⚙️ Config: kubelet
+###### ⚙️ Config: worker-kubelet
 > KubeletConfig for the worker pool
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `config-kubelet` | Configuration policy identifier |
+| Name | `config-worker-kubelet` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -175,13 +175,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: replicas
+###### ⚙️ Config: worker-replicas
 > Worker MachineSet readiness
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `ready-replicas` | Configuration policy identifier |
+| Name | `ready-worker-replicas` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `inform` | Remediation action |
 | Severity | `medium` | Severity level |

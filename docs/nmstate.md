@@ -2,7 +2,7 @@
 
 > Kubernetes NMState operator and declarative node network configuration
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -117,13 +117,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: instance
+###### ⚙️ Config: nmstate-instance
 > NMState instance
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `config-instance` | Configuration policy identifier |
+| Name | `config-nmstate-instance` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

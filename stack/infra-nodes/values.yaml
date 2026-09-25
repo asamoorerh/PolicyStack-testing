@@ -131,7 +131,7 @@ stack:
         templateParameters:
           role: infra
 
-      - name: kubelet
+      - name: infra-kubelet
         enabled: true
         description: "KubeletConfig for the infra pool"
         policyRef: config
@@ -145,7 +145,7 @@ stack:
         templateParameters:
           role: infra
 
-      - name: machinesets-aws
+      - name: infra-machinesets
         enabled: true
         description: "Infra MachineSets cloned from the worker MachineSet"
         policyRef: aws
@@ -162,7 +162,7 @@ stack:
           nodeLabels:
             node-role.kubernetes.io/infra: ""
 
-      - name: machinesets-vmware
+      - name: infra-machinesets
         enabled: true
         description: "Infra MachineSets per vSphere failure domain"
         policyRef: vmware
@@ -175,7 +175,7 @@ stack:
         enableTemplateParameters: true
         templateParameters: *infraParams
 
-      - name: nodes-ready
+      - name: infra-replicas
         enabled: true
         description: "Infra MachineSet readiness"
         policyRef: ready

@@ -2,7 +2,7 @@
 
 > Dedicated storage nodes for OpenShift Data Foundation
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -71,13 +71,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 ##### Configuration Policies
 
-###### ⚙️ Config: machinesets-aws
+###### ⚙️ Config: storage-machinesets
 > Storage MachineSets cloned from the worker MachineSet
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `aws-machinesets-aws` | Configuration policy identifier |
+| Name | `aws-storage-machinesets` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -120,13 +120,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 ##### Configuration Policies
 
-###### ⚙️ Config: machinesets-vmware
+###### ⚙️ Config: storage-machinesets
 > Storage MachineSets per vSphere failure domain
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `vmware-machinesets-vmware` | Configuration policy identifier |
+| Name | `vmware-storage-machinesets` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -218,13 +218,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 ##### Configuration Policies
 
-###### ⚙️ Config: nodes-ready
+###### ⚙️ Config: storage-replicas
 > Storage MachineSet readiness
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `ready-nodes-ready` | Configuration policy identifier |
+| Name | `ready-storage-replicas` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `inform` | Remediation action |
 | Severity | `medium` | Severity level |
@@ -242,6 +242,31 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `namespace` | `openshift-machine-api` | Parameter value |
 | `nodeLabels` | `{'node-role.kubernetes.io/infra': '', 'cluster.ocs.openshift.io/openshift-storage': ''}` | Parameter value |
 
+###### ⚙️ Config: labeled-nodes
+> config.replicas nodes are designated for storage
+
+**Basic Configuration:**
+| Parameter | Value | Description |
+| --------- | ----- | ----------- |
+| Name | `ready-labeled-nodes` | Configuration policy identifier |
+| Compliance Type | `musthave` | Compliance requirement type |
+| Remediation | `inform` | Remediation action |
+| Severity | `medium` | Severity level |
+| Raw Template | Enabled | Emitted under object-templates-raw |
+
+**Templates:**
+| Template File | Compliance Type | Description |
+| ------------- | --------------- | ----------- |
+| `converters/labeled-nodes-ready.yaml` | inherited | Template configuration |
+
+**Template Parameters:**
+| Parameter | Value | Description |
+| --------- | ----- | ----------- |
+| `role` | `storage` | Parameter value |
+| `namespace` | `openshift-machine-api` | Parameter value |
+| `readyLabel` | `cluster.ocs.openshift.io/openshift-storage` | Parameter value |
+| `nodeLabels` | `{'node-role.kubernetes.io/infra': '', 'cluster.ocs.openshift.io/openshift-storage': ''}` | Parameter value |
+
 
 ---
 
@@ -250,8 +275,8 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | Resource Type | Count |
 | ------------- | ----- |
 | Policies | 4 |
-| Configuration Policies | 4 |
+| Configuration Policies | 5 |
 | Operator Policies | 0 |
 | Certificate Policies | 0 |
 | PolicySets | 0 |
-| **Total Resources** | **8** |
+| **Total Resources** | **9** |

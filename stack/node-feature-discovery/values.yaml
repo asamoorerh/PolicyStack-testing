@@ -28,7 +28,7 @@ stack:
       - name: node-feature-discovery
         enabled: true
         description: "Node Feature Discovery Operator"
-        displayName: "Node Feature Discovery"
+        displayName: "Node Feature Discovery Operator"
         policyRef: nfd-install
         severity: medium
         remediationAction: enforce

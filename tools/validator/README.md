@@ -24,7 +24,8 @@ In CI:
 | ID         | Severity | What it catches |
 |------------|----------|-----------------|
 | POLICY001  | error    | Policy/PolicySet ACM-replicated name `<ns>.<name>-<release>` > 63 chars; ConfigurationPolicy/OperatorPolicy/CertificatePolicy `metadata.name` (`<parent>-<sub>`) > 63 chars |
-| POLICY002  | error    | Duplicate rendered policy `metadata.name` within a `policyNamespace` |
+| POLICY002  | error    | Duplicate rendered `metadata.name` WITHIN one element |
+| POLICY003  | error    | Two different elements render a policy-template with the same name. ACM requires template names to be unique across every Policy on a cluster, so `policies[].name: install` + `configPolicies[].name: ns-monitoring` in two elements is rejected on-cluster with "Template name must be unique". Covers toggled-off entries and the `-ns`/`-status` templates an operatorPolicy generates |
 | POLICY010  | error    | `policyRef` points to nonexistent or disabled parent policy |
 | POLICY011  | error    | dependency reference that can never be satisfied: unknown `dependencies`/`extraDependencies` target, unknown `element:`, `element:` on a template kind, `waitForOperator` naming no enabled operator, or a target policy policy-library never emits (no enabled sub-policy attached) |
 | POLICY020  | error    | `templateNames[].name` has no matching `converters/<name>.yaml` |

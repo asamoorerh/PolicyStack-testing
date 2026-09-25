@@ -2,7 +2,7 @@
 
 > OpenShift Data Foundation: Ceph storage and the NooBaa object gateway
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -39,7 +39,6 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `resourceProfile` | `balanced` | balanced, lean or performance |
 | `defaultStorageClass` | `ocs-storagecluster-ceph-rbd` | StorageClass marked default cluster-wide. Every other class is marked non-default. |
 | `flexibleScaling` | `None` | count is not a multiple of three. Leave unset to let ODF decide. |
-| `csiOnAllNodes` | `True` | Run Ceph CSI node plugins on every node rather than only storage nodes |
 | `multiCloudGateway` | `manage` | manage or ignore - whether ODF runs the NooBaa multicloud gateway |
 | `deviceSet` | `(dict)` | The disks backing Ceph |
 | `encryption` | `(dict)` | Encryption at rest |
@@ -146,7 +145,6 @@ This policy stays `Pending` until every target below reports the listed complian
 | Template File | Compliance Type | Description |
 | ------------- | --------------- | ----------- |
 | `converters/storage-cluster.yaml` | inherited | Template configuration |
-| `converters/ceph-csi-config.yaml` | inherited | Template configuration |
 
 **Template Parameters:**
 | Parameter | Value | Description |
@@ -158,7 +156,7 @@ This policy stays `Pending` until every target below reports the listed complian
 ---
 
 ### 📋 Policy: ready
-> Reports NonCompliant until the StorageCluster is Available
+> Reports NonCompliant until ODF has published its StorageClasses
 
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
@@ -166,7 +164,7 @@ This policy stays `Pending` until every target below reports the listed complian
 | Namespace | `<namespace>` | Policy namespace |
 | Enabled | `True` | Whether this policy is templated |
 | Severity | `medium` | Policy severity level |
-| Remediation | `inform` | Other elements depend on this policy by name; it is the "storage is usable" contract |
+| Remediation | `inform` | live health, which nothing depends on. |
 
 #### Dependencies
 
@@ -188,7 +186,7 @@ This policy stays `Pending` until every target below reports the listed complian
 ##### Configuration Policies
 
 ###### ⚙️ Config: available
-> StorageCluster readiness
+> ODF StorageClasses exist
 
 **Basic Configuration:**
 | Parameter | Value | Description |
@@ -197,11 +195,67 @@ This policy stays `Pending` until every target below reports the listed complian
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `inform` | Remediation action |
 | Severity | `medium` | Severity level |
+| Raw Template | Enabled | Emitted under object-templates-raw |
 
 **Templates:**
 | Template File | Compliance Type | Description |
 | ------------- | --------------- | ----------- |
 | `converters/storage-cluster-ready.yaml` | inherited | Template configuration |
+
+**Template Parameters:**
+| Parameter | Value | Description |
+| --------- | ----- | ----------- |
+| `name` | `ocs-storagecluster` | Parameter value |
+| `namespace` | `openshift-storage` | Parameter value |
+
+
+---
+
+### 📋 Policy: health
+> Reports live StorageCluster health
+
+| Parameter | Value | Description |
+| --------- | ----- | ----------- |
+| Name | `health-<release>` | Full policy name including release |
+| Namespace | `<namespace>` | Policy namespace |
+| Enabled | `True` | Whether this policy is templated |
+| Severity | `medium` | Policy severity level |
+| Remediation | `inform` | Action when policy is violated |
+
+#### Dependencies
+
+This policy stays `Pending` until every target below reports the listed compliance state.
+
+| Resolves To | Kind | Awaited State |
+| ----------- | ---- | ------------- |
+| `ready-<release>` | `Policy` | `Compliant` |
+
+#### Compliance Metadata
+| Type | Values | Description |
+| ---- | ------ | ----------- |
+| Categories | CP Contingency Planning, SC System and Communications Protection (default) | Category classifications |
+| Controls | CP-9 System Backup, SC-28 Protection of Information at Rest (default) | Control mappings |
+| Standards | NIST SP 800-53 (default) | Compliance standards |
+
+#### Associated Sub-Policies
+
+##### Configuration Policies
+
+###### ⚙️ Config: conditions
+> StorageCluster reports Available and not Degraded
+
+**Basic Configuration:**
+| Parameter | Value | Description |
+| --------- | ----- | ----------- |
+| Name | `health-conditions` | Configuration policy identifier |
+| Compliance Type | `musthave` | Compliance requirement type |
+| Remediation | `inform` | Remediation action |
+| Severity | `medium` | Severity level |
+
+**Templates:**
+| Template File | Compliance Type | Description |
+| ------------- | --------------- | ----------- |
+| `converters/storage-cluster-health.yaml` | inherited | Template configuration |
 
 **Template Parameters:**
 | Parameter | Value | Description |
@@ -338,9 +392,9 @@ This policy stays `Pending` until every target below reports the listed complian
 
 | Resource Type | Count |
 | ------------- | ----- |
-| Policies | 4 |
-| Configuration Policies | 6 |
+| Policies | 5 |
+| Configuration Policies | 7 |
 | Operator Policies | 1 |
 | Certificate Policies | 0 |
 | PolicySets | 0 |
-| **Total Resources** | **11** |
+| **Total Resources** | **13** |

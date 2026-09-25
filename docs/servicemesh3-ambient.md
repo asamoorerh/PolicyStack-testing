@@ -2,7 +2,7 @@
 
 > Service Mesh 3 in ambient mode, with Kiali, OpenTelemetry and Tempo
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:18*
 
 ## Component Configuration
 

@@ -2,7 +2,7 @@
 
 > Kubelet tuning for control-plane nodes
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -58,13 +58,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 ##### Configuration Policies
 
-###### ⚙️ Config: kubelet
+###### ⚙️ Config: master-kubelet
 > KubeletConfig for the master pool
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `config-kubelet` | Configuration policy identifier |
+| Name | `config-master-kubelet` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

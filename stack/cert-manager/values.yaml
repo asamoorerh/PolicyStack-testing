@@ -127,7 +127,7 @@ stack:
     # @description: Configuration policies
     configPolicies:
       # @description: Adds the cluster-monitoring label to the operator namespace
-      - name: ns-monitoring
+      - name: cert-manager-ns-monitoring
         enabled: true
         description: "Adds openshift.io/cluster-monitoring label to operator namespace"
         policyRef: install

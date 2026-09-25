@@ -2,7 +2,7 @@
 
 > Node Feature Discovery Operator and instance for hardware feature labelling
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -102,7 +102,7 @@ Default policy metadata applied unless overridden per-policy
 | --------- | ----- | ----------- |
 | Name | `nfd-install-node-feature-discovery` | Operator policy identifier |
 | Namespace | `openshift-nfd` | Target namespace for operator |
-| Display Name | `Node Feature Discovery` | Display name for operator |
+| Display Name | `Node Feature Discovery Operator` | Display name for operator |
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

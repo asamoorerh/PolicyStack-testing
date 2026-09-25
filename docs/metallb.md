@@ -2,7 +2,7 @@
 
 > MetalLB load balancer: address pools, advertisements and BGP peers
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -121,13 +121,13 @@ This policy stays `Pending` until every target below reports the listed complian
 
 ##### Configuration Policies
 
-###### ⚙️ Config: instance
+###### ⚙️ Config: metallb-instance
 > MetalLB instance
 
 **Basic Configuration:**
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Name | `config-instance` | Configuration policy identifier |
+| Name | `config-metallb-instance` | Configuration policy identifier |
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

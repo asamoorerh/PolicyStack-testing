@@ -143,7 +143,7 @@ stack:
         enableTemplateParameters: true
         templateParameters: *gitopsParams
 
-      - name: console
+      - name: argocd-console
         enabled: true
         description: "ArgoCD console link"
         policyRef: link

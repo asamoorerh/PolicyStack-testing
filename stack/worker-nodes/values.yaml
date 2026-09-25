@@ -67,7 +67,7 @@ stack:
           - name: machines
 
     configPolicies:
-      - name: kubelet
+      - name: worker-kubelet
         enabled: true
         description: "KubeletConfig for the worker pool"
         policyRef: config
@@ -95,7 +95,7 @@ stack:
         templateParameters:
           namespace: openshift-machine-api
 
-      - name: replicas
+      - name: worker-replicas
         enabled: true
         description: "Worker MachineSet readiness"
         policyRef: ready

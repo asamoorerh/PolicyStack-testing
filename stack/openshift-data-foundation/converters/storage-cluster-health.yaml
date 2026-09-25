@@ -1,0 +1,23 @@
+{{- /*
+Inform-only live health of the StorageCluster. Deliberately NOT part of the `ready` contract: these
+conditions track current Ceph health and flap on any mon/OSD restart or resourceProfile change, and
+anything that depended on them would be paused by ACM every time they did. Nothing depends on this
+policy, so it is free to report the truth.
+*/ -}}
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  name: {{ .Parameters.name }}
+  namespace: {{ .Parameters.namespace }}
+status:
+  conditions:
+    - type: Available
+      status: 'True'
+    - type: ReconcileComplete
+      status: 'True'
+    - type: Progressing
+      status: 'False'
+    - type: Degraded
+      status: 'False'
+    - type: VersionMismatch
+      status: 'False'

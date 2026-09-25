@@ -28,7 +28,7 @@ stack:
         enabled: true
         description: "Kiali service mesh observability console"
         # @desc: Must match the CSV displayName so the generated status check can find it
-        displayName: "Kiali Operator provided by Red Hat"
+        displayName: "Kiali Operator"
         policyRef: install
         severity: medium
         remediationAction: enforce

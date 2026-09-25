@@ -2,7 +2,7 @@
 
 > External Secrets Operator (Red Hat) for syncing secrets from external KMS providers
 
-*Generated: 2026-08-20 21:44:36*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
@@ -76,7 +76,7 @@ Default policy metadata applied unless overridden per-policy
 | --------- | ----- | ----------- |
 | Name | `eso-install-external-secrets` | Operator policy identifier |
 | Namespace | `external-secrets-operator` | Target namespace for operator |
-| Display Name | `External Secrets Operator` | Display name for operator |
+| Display Name | `External Secrets Operator for Red Hat OpenShift` | Display name for operator |
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
