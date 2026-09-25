@@ -4,8 +4,8 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Both actions are high-impact and independently switchable. Setting a target
-    # @description: version and toggling `upgrade` on is what actually starts an upgrade.
+    # @description: Both actions are high-impact and switched independently. An upgrade starts only
+    # @description: when a target version is set and `upgrade` is on.
     toggles:
       # @desc: Pin the ClusterVersion channel (requires config.channel)
       channel: false
@@ -38,8 +38,8 @@ stack:
         severity: medium
         disabled: false
 
-      # @description: The whole upgrade flow - guard, trigger, completion - behind one switch, so
-      # @description: none of it can report NonCompliant when no upgrade is targeted.
+      # @description: The whole upgrade flow (guard, trigger, completion) sits behind one switch, so
+      # @description: none of it reports NonCompliant when no upgrade is targeted.
       - name: upgrade
         enabled: true
         description: "Drive the cluster to the target version and report on progress"
@@ -59,7 +59,7 @@ stack:
         templateNames:
           - name: channel
 
-      # @description: Reachability guard. Inform-only: it never acts, it only reports.
+      # @description: Inform-only reachability guard
       - name: guard
         enabled: true
         description: "Target version reachability"
@@ -71,7 +71,7 @@ stack:
         templateNames:
           - name: upgrade-allowed
 
-      # @description: The actual trigger, held until the guard reports the target is reachable
+      # @description: Upgrade trigger, held until the guard reports the target is reachable
       - name: trigger
         enabled: true
         description: "ClusterVersion desiredUpdate"

@@ -2,7 +2,7 @@
 
 > Kubernetes NMState operator and declarative node network configuration
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -36,7 +36,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | Key | Default | Description |
 | --- | ------- | ----------- |
 | `networking` | `(dict)` |  |
-| `hosts` | `(dict)` | for that host, not cluster-wide. Use it for static addressing and per-host MACs. |
+| `hosts` | `(dict)` | Per-host overrides keyed by hostname. An interface declared here is rendered only for that host, not cluster-wide. Use it for static addressing and per-host MACs. |
 
 ## Policies
 

@@ -2,7 +2,7 @@
 
 > Worker node sizing and kubelet tuning
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -37,8 +37,8 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 | Key | Default | Description |
 | --- | ------- | ----------- |
-| `replicas` | `` | Replicas per worker MachineSet. Empty leaves the installer's count alone. |
-| `instanceType` | `` | AWS instance type. Empty keeps whatever the installer chose. |
+| `replicas` | `` | Replicas per worker MachineSet. Empty keeps the installer's value. |
+| `instanceType` | `` | AWS instance type. Empty keeps the installer's value. |
 | `numCPUs` | `` | vSphere vCPUs. Empty keeps the installer's value. |
 | `numCoresPerSocket` | `` | vSphere cores per socket |
 | `memoryMiB` | `` | vSphere memory in MiB |

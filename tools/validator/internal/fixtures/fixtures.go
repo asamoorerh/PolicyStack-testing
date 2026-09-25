@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// ManagedCluster is the trimmed ACM ManagedCluster shape we need.
+// ManagedCluster is the subset of an ACM ManagedCluster the validator reads.
 type ManagedCluster struct {
 	APIVersion string   `json:"apiVersion"`
 	Kind       string   `json:"kind"`
@@ -26,9 +26,8 @@ type Metadata struct {
 	Labels map[string]string `json:"labels"`
 }
 
-// LoadDir reads every *.yaml/*.yml under dir as a ManagedCluster and returns
-// the parsed list. Files that don't unmarshal as kind=ManagedCluster are
-// skipped silently — keeps the fixture dir flexible.
+// LoadDir parses every *.yaml/*.yml file in dir. Files that are not a named
+// ManagedCluster are skipped.
 func LoadDir(dir string) ([]*ManagedCluster, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

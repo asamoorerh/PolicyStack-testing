@@ -1,11 +1,11 @@
 stack:
-  # @description: Dedicated infra nodes, and moving platform workloads onto them
+  # @description: Dedicated infra nodes and the platform workloads placed on them
   infraNodes:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Exactly one platform toggle should be on. Set these in
-    # @description: values/platforms/<platform>.yaml and select the file with a
+    # @description: Enable only one platform toggle (aws or vmware). Set it in
+    # @description: values/platforms/<platform>.yaml, selected by a
     # @description: config.<domain>/platform.<N> cluster label.
     toggles:
       # @desc: MachineConfigPool for the infra role
@@ -20,16 +20,16 @@ stack:
       ready: true
       # @desc: Move gitops, ingress, image registry and monitoring onto infra nodes
       workloads: false
-      # @desc: Move those components back OFF infra nodes. Turning `workloads` off only stops
-      # @desc: enforcing the move - it does not undo it. Turn this on to actually revert, then
-      # @desc: turn it off again once the components have moved.
+      # @desc: Move the `workloads` components back off infra nodes. Disabling `workloads` stops
+      # @desc: enforcement but does not revert placement. Enable this to revert, then disable it
+      # @desc: once the components have moved.
       restore: false
 
     # @description: Infra node sizing
     config:
       # @desc: Infra nodes per zone
       replicas: 3
-      # @desc: Availability zones. Empty means "wherever the workers are".
+      # @desc: AWS availability zones. Empty uses the zone of the cloned worker MachineSet.
       zones: []
       # @desc: AWS instance type. Empty inherits from the worker MachineSet.
       instanceType: ""
@@ -41,7 +41,7 @@ stack:
       memoryMiB: ""
       # @desc: Namespace the GitopsService lives in
       gitopsNamespace: openshift-gitops
-      # @desc: Kubelet reservations for infra nodes
+      # @desc: Kubelet max pods and resource reservations for infra nodes
       maxPods: 250
       systemReservedMemory: 2Gi
       systemReservedCpu: 500m
@@ -106,7 +106,7 @@ stack:
         remediationAction: enforce
         severity: medium
         disabled: false
-        # @desc: Never move workloads onto nodes that are not up yet
+        # @desc: Move workloads only after the infra nodes are ready
         dependencies:
           - name: ready
 
@@ -210,14 +210,14 @@ stack:
         complianceType: musthave
         remediationAction: enforce
         severity: medium
-        # @desc: Merges into the existing cluster-monitoring-config rather than replacing it
+        # @desc: Merges placement keys into the existing cluster-monitoring-config
         rawTemplate: true
         templateNames:
           - name: infra-monitoring
         enableTemplateParameters: true
         templateParameters:
           role: infra
-          # @desc: Monitoring components to pin. Alertmanager and Prometheus are the heavy ones.
+          # @desc: Monitoring components to pin. Alertmanager and Prometheus use the most resources.
           components:
             - alertmanagerMain
             - prometheusK8s

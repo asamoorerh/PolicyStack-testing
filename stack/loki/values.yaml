@@ -4,8 +4,8 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Optional pieces. Each depends on a different element being present, so they are
-    # @description: switched on independently.
+    # @description: Optional components. Each depends on a different element, so each has its own
+    # @description: toggle.
     toggles:
       # @desc: Forward cluster logs into Loki. Requires the openshift-logging element.
       forwarder: false

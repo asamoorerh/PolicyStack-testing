@@ -1,8 +1,8 @@
 {{- /*
-Inform-only guard: is the requested target actually reachable from where this cluster is?
+Inform-only guard: checks that the target version is reachable from the cluster's current version.
 
-Validity is decided in the template (reliable); when invalid it forces NonCompliant with a
-mustnothave on the ClusterVersion, which is a scalar existence check rather than status matching.
+Validity is computed in the template, which is reliable where ACM status matching is not. When
+invalid, a mustnothave on the ClusterVersion (an existence check) forces NonCompliant.
 */ -}}
 {{- $cfg := .Values.stack.openshiftUpgrade.config }}
 {{ "{{" }}- $target := "{{ $cfg.targetVersion }}" {{ "}}" }}

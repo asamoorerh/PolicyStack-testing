@@ -4,9 +4,7 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: CPU layout for the profile. reservedCpus and isolatedCpus are REQUIRED when this
-    # @description: element is enabled - they are node-specific, so there is no safe default and the
-    # @description: render fails rather than guessing.
+    # @description: Profile CPU layout. reservedCpus and isolatedCpus are node-specific and must be set.
     config:
       # @desc: CPUs reserved for platform/infrastructure workloads, e.g. "0-1"
       reservedCpus: ""

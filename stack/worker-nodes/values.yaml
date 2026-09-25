@@ -15,9 +15,9 @@ stack:
 
     # @description: Worker sizing and kubelet reservations
     config:
-      # @desc: Replicas per worker MachineSet. Empty leaves the installer's count alone.
+      # @desc: Replicas per worker MachineSet. Empty keeps the installer's value.
       replicas: ""
-      # @desc: AWS instance type. Empty keeps whatever the installer chose.
+      # @desc: AWS instance type. Empty keeps the installer's value.
       instanceType: ""
       # @desc: vSphere vCPUs. Empty keeps the installer's value.
       numCPUs: ""

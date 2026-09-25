@@ -7,8 +7,8 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/render"
 )
 
-// LintCheck (POLICY070) shells out to `helm lint`. The Runner is wired in
-// at startup so checks remain side-effect-free at construction.
+// LintCheck (POLICY070) runs `helm lint` on each element. Runner is set by
+// run.buildRegistry; the check does nothing without it.
 type LintCheck struct {
 	Runner *render.Runner
 }

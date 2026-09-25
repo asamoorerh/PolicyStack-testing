@@ -21,7 +21,7 @@ stack:
         enabled: true
         # @desc: StorageClass for raw results. Omit to use the cluster default.
         storageClass: ""
-      # @desc: ComplianceRemediation names to apply when the remediate toggle is on. Keeping the list in values rather than an out-of-band ConfigMap makes it reviewable in git.
+      # @desc: ComplianceRemediation names applied when the remediate toggle is on; reviewable in git.
       autoRemediate: []
 
     # @description: Default policy metadata applied unless overridden per-policy

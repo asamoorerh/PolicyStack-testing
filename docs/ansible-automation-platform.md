@@ -2,7 +2,7 @@
 
 > Ansible Automation Platform: controller, hub, EDA and Lightspeed
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -27,7 +27,7 @@ Override an entry's `enabled` by name. Being a map, these merge cleanly through 
 
 | Toggle | Default | Description |
 | ------ | ------- | ----------- |
-| `storage` | `False` | Requires openshift-data-foundation on the same cluster. |
+| `storage` | `False` | Request a NooBaa bucket from ODF and wire it up as hub content storage. Requires openshift-data-foundation on the same cluster. |
 | `certs` | `False` | Give AAP the cluster service CA and trusted CA bundle |
 | `link` | `True` | Publish an OpenShift console link to AAP |
 

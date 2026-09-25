@@ -7,9 +7,9 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// PolicySetCheck (POLICY040) verifies every name listed in
-// policySets[].policies[] is defined in policies[]. Disabled parents are OK
-// here — ACM treats disabled policies as still-present resources.
+// PolicySetCheck (POLICY040) verifies every name in policySets[].policies[]
+// is defined in policies[]. Disabled parents are accepted; the Policy object
+// still exists in ACM.
 type PolicySetCheck struct{}
 
 func (PolicySetCheck) ID() string  { return "POLICY040" }

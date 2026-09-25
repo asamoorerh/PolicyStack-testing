@@ -7,10 +7,9 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// DeadKeyCheck (POLICY031) reports values keys that policy-library never reads. These fail
-// silently rather than loudly: an element using `enable:` renders nothing at all, and one using
-// `defaultPolicy:` loses its compliance annotations, in both cases with a clean `helm template`.
-// stack/openshift-logging shipped both for months without any check noticing.
+// DeadKeyCheck (POLICY031) reports values keys that policy-library never reads. `helm template`
+// succeeds either way: an element using `enable:` renders nothing, and one using `defaultPolicy:`
+// loses its compliance annotations.
 type DeadKeyCheck struct{}
 
 func (DeadKeyCheck) ID() string   { return "POLICY031" }

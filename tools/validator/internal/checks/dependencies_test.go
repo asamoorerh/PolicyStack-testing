@@ -16,7 +16,7 @@ func elementNamed(t *testing.T, chartName, key, body string) *chart.Element {
 }
 
 // certManager is a well-formed sibling: policy "install" exists, is enabled, and has an operator
-// attached (so policy-library actually emits a Policy for it). "bare" has nothing attached.
+// attached, so policy-library renders the Policy. "bare" has nothing attached.
 func certManager(t *testing.T) *chart.Element {
 	return elementNamed(t, "cert-manager", "certManager", `
     policies:
@@ -300,8 +300,7 @@ func TestPolicy011_TogglesDoNotHideBrokenReferences(t *testing.T) {
 }
 
 func TestPolicy011_ToggledOffTargetIsNotAnError(t *testing.T) {
-	// The mirror image: a target that is toggle-governed and currently off is fine - it is off on
-	// this cluster only, and a cluster values file can turn it on.
+	// A toggle-governed target that is off by default is valid; a cluster values file can turn it on.
 	sibling := elementNamed(t, "cert-manager", "certManager", `
     toggles:
       install: false
@@ -331,7 +330,7 @@ func TestPolicy011_ToggledOffTargetIsNotAnError(t *testing.T) {
 }
 
 func TestPolicy003_CrossElementTemplateNameCollision(t *testing.T) {
-	// The real-world failure: two elements each with policies[].name=install and
+	// Two elements each with policies[].name=install and
 	// configPolicies[].name=ns-monitoring both render a ConfigurationPolicy called
 	// "install-ns-monitoring". ACM rejects the second with "Template name must be unique".
 	mk := func(chartName, key string) *chart.Element {
@@ -383,8 +382,8 @@ func TestPolicy003_ElementSpecificNamesAreSilent(t *testing.T) {
 }
 
 func TestPolicy003_CoversToggledOffAndOperatorTriples(t *testing.T) {
-	// Both were real misses: a collision hidden behind an off-by-default toggle, and the -ns /
-	// -status templates an operatorPolicy generates alongside itself.
+	// Covers a collision behind an off-by-default toggle, and the -ns / -status templates an
+	// operatorPolicy renders.
 	mk := func(chartName, key string) *chart.Element {
 		return elementNamed(t, chartName, key, `
     toggles:

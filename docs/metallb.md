@@ -2,7 +2,7 @@
 
 > MetalLB load balancer: address pools, advertisements and BGP peers
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -36,7 +36,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 | Key | Default | Description |
 | --- | ------- | ----------- |
-| `ipAddressPools` | `(dict)` | internal: {addresses: ["192.168.100.1-192.168.100.20"], autoAssign: true} |
+| `ipAddressPools` | `(dict)` | IPAddressPool specs, e.g. internal: {addresses: ["192.168.100.1-192.168.100.20"], autoAssign: true} |
 | `l2Advertisements` | `(dict)` | L2Advertisement specs, e.g. internal: {ipAddressPools: [internal]} |
 | `bgpAdvertisements` | `(dict)` | BGPAdvertisement specs, e.g. internal: {ipAddressPools: [internal], peers: [rack1]} |
 | `bgpPeers` | `(dict)` | BGPPeer specs, e.g. rack1: {myASN: 64512, peerASN: 64512, peerAddress: 10.0.0.1} |

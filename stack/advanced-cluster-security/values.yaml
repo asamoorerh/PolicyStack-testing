@@ -4,7 +4,7 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Which ACS role this cluster plays. The values cascade decides - turn `central`
+    # @description: Which ACS role this cluster plays, set by the values cascade. Turn `central`
     # @description: on in values/acm/*.yaml and `secured` on wherever ACS agents should run.
     toggles:
       # @desc: Run Central here (the ACS hub). Exactly one cluster should have this. Also brings
@@ -52,7 +52,7 @@ stack:
         collection: CORE_BPF
       # @desc: Image used by the init-bundle Job
       bootstrapImage: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
-      # @description: SecurityPolicy objects, keyed by name. As values rather than built-ins they can be edited, extended or replaced per cluster.
+      # @description: SecurityPolicy objects keyed by name; edit, extend or replace per cluster.
       securityPolicies:
         no-privilege-escalation:
           policyName: No Privilege Escalation

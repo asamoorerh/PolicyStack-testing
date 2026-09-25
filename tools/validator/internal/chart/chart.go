@@ -1,7 +1,6 @@
-// Package chart discovers element charts under stack/ and parses each one
-// into a strongly-typed Element. Source values.yaml is parsed twice: once
-// as a typed struct (for check logic) and once as a yaml.v3 Node tree (for
-// source-line-accurate findings).
+// Package chart discovers element charts under stack/ and loads each into an
+// Element. values.yaml is parsed into a yaml.v3 Node tree, which keeps source
+// positions for findings, and the typed Component is decoded from that tree.
 package chart
 
 import (
@@ -16,7 +15,7 @@ import (
 
 // Element is a single chart under stack/<name>/ or the sample-element/.
 type Element struct {
-	// Name from Chart.yaml — kebab-case, used as Helm Release.Name suffix.
+	// Name from Chart.yaml (kebab-case). Prefix of the helm Release.Name.
 	ChartName string
 	// Absolute filesystem path of the element directory.
 	Dir string
@@ -26,11 +25,11 @@ type Element struct {
 	ConvertersDir string
 	// Dependencies as declared in Chart.yaml.
 	Dependencies []Dependency
-	// Parsed values (typed; only the keys we care about).
+	// Typed values; only the keys the checks inspect.
 	Values *Values
-	// yaml.v3 root node for values.yaml — preserves line/column for findings.
+	// yaml.v3 root node for values.yaml, used for finding line/column.
 	ValuesDoc *yaml.Node
-	// Top-level key under `stack:` — may be empty if values.yaml has no stack.
+	// Key under `stack:`. Empty when values.yaml has no stack block.
 	StackKey string
 }
 
@@ -48,8 +47,8 @@ type chartYaml struct {
 	Dependencies []Dependency `yaml:"dependencies"`
 }
 
-// Values is the typed view of `stack.<key>` plus root-level fields we need.
-// We only model the fields the validator inspects; helm sees the full map.
+// Values is the typed view of `stack.<key>` plus the root-level fields the
+// validator needs. Only fields the checks inspect are modelled.
 type Values struct {
 	PolicyNamespace string             // from root values.yaml (not per element)
 	Component       *Component         // values.stack[stackKey]
@@ -57,9 +56,9 @@ type Values struct {
 
 // Component mirrors the per-element block under `stack.<key>`.
 //
-// Note the spelling of Enabled/Default: policy-library reads `enabled` and `default`. The legacy
-// `enable`/`defaultPolicy` spellings are modelled separately so DeadKeys can report them - an
-// element using them renders silently wrong rather than failing.
+// policy-library reads `enabled` and `default`. The legacy `enable` and `defaultPolicy` spellings
+// are modelled separately so DeadKeyCheck can report them; an element using them renders wrong
+// without any error.
 type Component struct {
 	Enabled             bool                `yaml:"enabled"`
 	Policies            []Policy            `yaml:"policies"`
@@ -73,24 +72,23 @@ type Component struct {
 	OrderPolicies  bool            `yaml:"orderPolicies"`
 	OrderManifests bool            `yaml:"orderManifests"`
 
-	// Legacy spellings the chart never reads. Present only so they can be reported.
+	// Legacy spellings the chart never reads, modelled only so they can be reported.
 	LegacyEnable        *bool    `yaml:"enable"`
 	LegacyDefaultPolicy *Default `yaml:"defaultPolicy"`
 }
 
-// Default is the per-component defaults block. policy-library consumes only
-// categories/controls/standards from it; Severity/RemediationAction/Disabled are modelled so
-// DeadKeys can report that setting them here has no effect.
+// Default is the per-component defaults block. policy-library reads only
+// categories/controls/standards from it; Severity, RemediationAction and Disabled are modelled so
+// DeadKeyCheck can report that they have no effect here.
 type Default struct {
 	Severity          string `yaml:"severity"`
 	RemediationAction string `yaml:"remediationAction"`
 	Disabled          *bool  `yaml:"disabled"`
 }
 
-// CouldBeEnabled reports whether an entry is either enabled now, or governed by a toggle and so
-// could be enabled on some cluster. Structural checks use this rather than IsEnabled: a toggle is a
-// per-cluster switch, so a reference inside a currently-off sub-feature still has to resolve, or the
-// typo only surfaces when someone turns it on in production.
+// CouldBeEnabled reports whether an entry is enabled, or is governed by a toggle and so may be
+// enabled on some cluster. Structural checks use this instead of IsEnabled so that references inside
+// a sub-feature that is off by default are still validated before a cluster turns it on.
 func (c *Component) CouldBeEnabled(name string, declared bool) bool {
 	if c != nil {
 		if _, ok := c.Toggles[name]; ok {
@@ -109,8 +107,8 @@ func (c *Component) IsToggled(name string) bool {
 	return ok
 }
 
-// IsEnabled resolves an entry's effective enabled state, honouring Toggles. A toggle keyed by the
-// entry's name overrides its declared `enabled`, in either direction.
+// IsEnabled returns an entry's effective enabled state. A toggle keyed by the entry's name
+// overrides its declared `enabled` in either direction.
 func (c *Component) IsEnabled(name string, declared bool) bool {
 	if c == nil {
 		return declared
@@ -215,8 +213,8 @@ type PolicySet struct {
 	Policies []string `yaml:"policies"`
 }
 
-// TemplateName supports the bare-string OR mapping form documented in
-// chart-readme.md ("templateNames: [foo]" or "templateNames: [{name: foo}]").
+// TemplateName accepts both forms documented in chart-readme.md:
+// "templateNames: [foo]" and "templateNames: [{name: foo}]".
 type TemplateName struct {
 	Name string `yaml:"name"`
 }
@@ -234,8 +232,8 @@ func (t *TemplateName) UnmarshalYAML(n *yaml.Node) error {
 	return fmt.Errorf("templateNames entry: unexpected yaml kind %d at line %d", n.Kind, n.Line)
 }
 
-// LoadAll discovers element charts under stackDir + sampleDir (if present)
-// and the root policyNamespace from rootValuesFile.
+// LoadAll loads every element chart under stackDir, plus sampleDir when it
+// contains a Chart.yaml, and returns policyNamespace from rootValuesFile.
 func LoadAll(stackDir, sampleDir, rootValuesFile string) ([]*Element, string, error) {
 	ns, err := loadPolicyNamespace(rootValuesFile)
 	if err != nil {
@@ -329,7 +327,7 @@ func decodeComponent(doc *yaml.Node) (string, *Component, error) {
 	if len(stackNode.Content) < 2 {
 		return "", nil, nil
 	}
-	// Take the first key under stack: — convention is one element per chart.
+	// One element per chart, so the first key under stack: is the element.
 	keyNode := stackNode.Content[0]
 	valueNode := stackNode.Content[1]
 	var c Component
@@ -365,8 +363,8 @@ func loadPolicyNamespace(path string) (string, error) {
 	return v.PolicyNamespace, nil
 }
 
-// CamelFromKebab converts a kebab-case chart name to the camelCase form used
-// as the key under `stack:` (per chart-readme.md). Matches tools/create-element.sh.
+// CamelFromKebab converts a kebab-case chart name to the camelCase key used
+// under `stack:` (see chart-readme.md). Matches tools/create-element.sh.
 func CamelFromKebab(s string) string {
 	parts := strings.Split(s, "-")
 	if len(parts) == 0 {

@@ -1,16 +1,15 @@
 {{- /*
-cert-manager-managed serving certificate for the EXTERNAL API endpoint (api.<domain>:6443).
+cert-manager-managed serving certificate for the external API endpoint (api.<domain>:6443).
 
-Safe by construction:
-  - The Certificate is always created; the APIServer is only patched once it reports Ready.
-  - namedCertificates is ADDITIVE and SNI-matched, so the internal cert and api-int are untouched
-    and a bad cert can never block internal access. Never name-cert api-int.
-  - The secretName is stable across renewals, so the API server hot-reloads; only the first-time
-    add rolls a revision.
+Safety:
+  - The Certificate is always created; the APIServer is patched only once it reports Ready.
+  - namedCertificates is additive and SNI-matched, so the internal cert and api-int are untouched
+    and a bad cert cannot block internal access. Never add api-int to namedCertificates.
+  - The secretName is stable across renewals, so the API server hot-reloads; only the first add
+    rolls out a new revision.
 
-Two template engines are in play. Helm resolves .Parameters/.Values here at render time; the
-escaped braces survive to the managed cluster, where ACM resolves the base domain and the readiness
-gate - neither is knowable at render time.
+Helm resolves .Parameters/.Values at render time. The escaped templates are resolved by ACM on the
+managed cluster, where the base domain and the readiness gate are known.
 */ -}}
 {{- $cfg := .Values.stack.certManager.config }}
 {{ "{{" }}- $baseDomain := dig "spec" "baseDomain" "" ((lookup "config.openshift.io/v1" "DNS" "" "cluster") | default dict) {{ "}}" }}

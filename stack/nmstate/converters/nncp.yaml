@@ -1,12 +1,11 @@
 {{- /*
-NodeNetworkConfigurationPolicies generated from the `networking` tree in values.
+NodeNetworkConfigurationPolicies generated from config.networking and config.hosts.
 
-Every input is plain configuration, so it resolves at render time. The objects are assembled as data
-and serialised with toYaml - structurally correct by construction, rather than depending on getting
-the indentation right across hundreds of lines of conditional text.
+All inputs are values and resolve at render time. Objects are built as dicts and emitted with
+toYaml to guarantee valid YAML without hand-managed indentation.
 
-The one genuinely runtime value is the cluster base domain, used to build per-host nodeSelector
-hostnames; that stays as an escaped ACM template.
+The only runtime value is the cluster base domain, used to build per-host nodeSelector hostnames;
+it stays an escaped ACM template.
 
 Shape of `config.networking`:
   nodeSelector: {}                        # applied to the shared NNCPs
@@ -16,7 +15,7 @@ Shape of `config.networking`:
   dns:          {servers: [], search: []}
   ovnMappings:  {<id>: {localnet, bridge}}
 and `config.hosts`: {<hostname>: {hostname?, networking: {interfaces, routes, dns}}}
-An interface declared under a host is rendered ONLY per-host, never cluster-wide.
+An interface declared under a host is rendered only per-host, not cluster-wide.
 */ -}}
 {{- $cfg := .Values.stack.nmstate.config }}
 {{- $net := $cfg.networking | default dict }}

@@ -9,18 +9,17 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// SubPolicyNameCheck (POLICY003) catches two DIFFERENT elements that render a policy-template with
-// the same name.
+// SubPolicyNameCheck (POLICY003) reports policy-templates with the same name rendered by different
+// elements.
 //
 // ACM requires policy-template names to be unique across every Policy placed on a cluster, because
-// the templates are replicated into that cluster's namespace. A collision is rejected on-cluster
-// with "Template name must be unique", and the whole Policy stops being processed.
+// the templates are replicated into that cluster's namespace. A duplicate is rejected on the
+// managed cluster with "Template name must be unique" and the whole Policy stops processing.
 //
-// POLICY002 only compares names within a single element, and a sub-policy name is
-// "<policyRef>-<name>" with no element or cluster component - so short, generic names like
-// policies[].name=install plus configPolicies[].name=ns-monitoring collide silently between
-// elements. That combination renders and validates cleanly and only fails once ACM sees it, which
-// is exactly why this runs repo-wide.
+// A sub-policy name is "<policyRef>-<name>" with no element or cluster component, so generic names
+// (policies[].name=install with configPolicies[].name=ns-monitoring) collide across elements. Helm
+// renders them without error and POLICY002 only compares within one element, so this runs
+// repo-wide.
 type SubPolicyNameCheck struct{}
 
 func (SubPolicyNameCheck) ID() string   { return "POLICY003" }
@@ -59,7 +58,7 @@ func (c *SubPolicyNameCheck) Run(ctx Context) []Finding {
 				continue
 			}
 			base := p.PolicyRef + "-" + p.Name
-			// an operator policy renders three templates
+			// An operator policy renders three templates.
 			add(base, "operatorPolicies", i)
 			add(base+"-ns", "operatorPolicies", i)
 			add(base+"-status", "operatorPolicies", i)
@@ -80,8 +79,7 @@ func (c *SubPolicyNameCheck) Run(ctx Context) []Finding {
 	var out []Finding
 	for _, name := range names {
 		owners := seen[name]
-		// only a collision when more than one distinct element produces it; a repeat inside one
-		// element is POLICY002's job and is reported there with better locality
+		// Only a collision across elements. Repeats within one element are POLICY002.
 		elements := map[string]bool{}
 		for _, o := range owners {
 			elements[o.element] = true

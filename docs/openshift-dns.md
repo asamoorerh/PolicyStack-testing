@@ -2,7 +2,7 @@
 
 > Cluster DNS operand configuration
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -27,7 +27,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 | Key | Default | Description |
 | --- | ------- | ----------- |
-| `tolerations` | `(list)` | workloads on infra, storage and master nodes keep cluster DNS. |
+| `tolerations` | `(list)` | Tolerations for the DNS daemonset. The default tolerates every taint so that workloads on infra, storage and master nodes keep cluster DNS. |
 
 ## Policies
 

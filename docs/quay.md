@@ -2,7 +2,7 @@
 
 > Red Hat Quay container registry
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -35,15 +35,16 @@ Values intended to be overridden per environment, datacenter, or cluster.
 
 | Key | Default | Description |
 | --- | ------- | ----------- |
-| `components` | `(dict)` | supplying it yourself, e.g. an external Postgres or object store. |
+| `components` | `(dict)` | Quay components the operator manages. Set a component to false to supply it externally, e.g. Postgres or object storage. |
 | `featureUserInitialize` | `True` | Allow the first user to be created through the initialize API |
 | `browserApiCallsXhrOnly` | `False` | Restrict browser API calls to XHR |
 | `featureUserCreation` | `False` | Allow self-service user creation |
 | `superUsers` | `(list)` | Quay superusers |
-| `adminUser` | `quayadmin` | Superuser the bootstrap Job initialises |
+| `adminUser` | `quayadmin` | Superuser the bootstrap Job initialises. Must also be listed in superUsers. |
 | `initialUser` | `quaydevel` | First non-admin user the bootstrap Job creates |
+| `initialUserEmail` | `quaydevel@myorg.com` | Email for that user |
 | `initialOrg` | `devel` | Organization the bootstrap Job creates |
-| `initialOrgEmail` | `devel@myorg.com` | Contact address for that organization (must differ from the admin's) |
+| `initialOrgEmail` | `devel@myorg.com` | Contact address for that organization. Quay emails are unique across users and organizations, so it must differ from every user's email. |
 | `initialRepo` | `example` | Repository the bootstrap Job creates in that organization |
 | `bootstrapImage` | `image-registry.openshift-image-registry.svc:5000/openshift/cli:latest` | Image used to run the bootstrap Job |
 

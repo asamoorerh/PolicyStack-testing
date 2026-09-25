@@ -2,7 +2,7 @@
 
 > Cluster Observability Operator for monitoring, logging and tracing UIs
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -80,7 +80,7 @@ Default policy metadata applied unless overridden per-policy
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
-| Upgrade Approval | `Automatic` | Pin upgrades by listing approved CSVs under `versions:` instead of changing this |
+| Upgrade Approval | `Automatic` | To pin upgrades, list approved CSVs under `versions:` and leave this Automatic |
 
 **Subscription Details:**
 | Parameter | Value | Description |

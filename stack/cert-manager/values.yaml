@@ -7,7 +7,7 @@ stack:
     # @description: Sub-feature switches. These override an entry's `enabled` by name and are a map,
     # @description: so a cluster values file can turn one on without restating the policies list.
     toggles:
-      # @desc: Cluster CA issuer. On by default - it is the default TLS issuer for the cluster.
+      # @desc: Cluster CA issuer. On by default; it is the cluster's default TLS issuer.
       ca: true
       # @desc: Replace the external API serving cert (api.<domain>). Additive and SNI-matched.
       api-cert: false

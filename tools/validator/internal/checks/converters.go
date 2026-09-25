@@ -54,9 +54,8 @@ func (c *MissingConverterCheck) Run(ctx Context) []Finding {
 	return out
 }
 
-// UnusedConverterCheck (POLICY021) warns when a converter file is on disk
-// but no templateNames[].name references it. Warning only — dead files are
-// noise, not breakage.
+// UnusedConverterCheck (POLICY021) warns when no templateNames[].name
+// references a converter file. Unused files do not break rendering.
 type UnusedConverterCheck struct{}
 
 func (UnusedConverterCheck) ID() string  { return "POLICY021" }

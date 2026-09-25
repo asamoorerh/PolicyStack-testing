@@ -1,6 +1,6 @@
 {{- /*
-Restrict where the cluster may pull and import images from. The registry lists are the whole point
-of this policy and differ per environment, so they come from the values cascade.
+Restricts where the cluster may pull and import images from. The registry lists differ per
+environment, so they come from the values cascade.
 */ -}}
 {{- $cfg := .Values.stack.manualRemediations.config }}
 apiVersion: config.openshift.io/v1

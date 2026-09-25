@@ -1,5 +1,5 @@
 {{- /*
-The Central CR. Every field is a plain value here rather than a hub-side ConfigMap lookup.
+The Central CR, rendered entirely from values (no hub-side ConfigMap lookup).
 */ -}}
 {{- $cfg := .Values.stack.advancedClusterSecurity.config }}
 apiVersion: platform.stackrox.io/v1alpha1

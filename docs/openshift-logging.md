@@ -2,7 +2,7 @@
 
 > Element for the OpenShift Logging. This installs and configures OpenShift Logging.
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -32,7 +32,7 @@ Default policy metadata applied unless overridden per-policy
 | Namespace | `<namespace>` | Policy namespace |
 | Enabled | `True` | Whether this policy is templated |
 | Severity | `medium` | Policy severity level |
-| Remediation | `enforce` | Set to enforce as, despite enforce not working on OperatorPolicy objects, there are ConfigPolicies we will need to enforce. |
+| Remediation | `enforce` | Set on the Policy, so it overrides every template's action, including the OperatorPolicy below. With inform, the operator is reported missing, not installed. |
 
 #### Compliance Metadata
 | Type | Values | Description |
@@ -56,7 +56,7 @@ Default policy metadata applied unless overridden per-policy
 | Display Name | `Red Hat OpenShift Logging` | Human-friendly display name in OLM |
 | Compliance Type | `musthave` | Operator must be present |
 | Remediation | `enforce` | Automatically install and configure |
-| Severity | `high` | Could be a high or medium severity depending on the security requirements. |
+| Severity | `high` | High or medium, depending on security requirements |
 | Upgrade Approval | `Automatic` | Approval strategy for operator updates (Automatic/Manual) |
 
 **Subscription Details:**

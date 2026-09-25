@@ -2,8 +2,8 @@ package checks
 
 import "fmt"
 
-// LabelCheck (POLICY050) surfaces label issues collected by the cascade
-// resolver as findings, pinned to the fixture file.
+// LabelCheck (POLICY050) reports the label issues collected by
+// cascade.Resolve against the fixture file.
 type LabelCheck struct{}
 
 func (LabelCheck) ID() string  { return "POLICY050" }
@@ -21,7 +21,7 @@ func (c *LabelCheck) Run(ctx Context) []Finding {
 			Cluster:  ctx.Cluster.ClusterName,
 			Element:  elementName(ctx),
 			Message:  fmt.Sprintf("label %q: %s", li.Key, li.Reason),
-			// Fixture file path is filled in by the runner when it knows it.
+			// run.Run sets File to the fixture path.
 		})
 	}
 	return out

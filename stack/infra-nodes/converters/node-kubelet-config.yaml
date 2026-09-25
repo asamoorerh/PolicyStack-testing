@@ -1,11 +1,10 @@
 {{- /*
-KubeletConfig for one node role. Identical in every node element, so it stays portable: the role
-comes from .Parameters, and the element's own config block is resolved from the chart name using the
-same camelCase rule policy-library uses to find `stack.<component>`. Nothing here names an element,
-so this file is byte-identical in master-nodes, worker-nodes and infra-nodes.
+KubeletConfig for one node role. The role comes from .Parameters and the element's config block is
+resolved from the chart name with the camelCase rule policy-library uses for `stack.<component>`, so
+this file is byte-identical in master-nodes, worker-nodes and infra-nodes.
 
-podsPerCore is derived from the node's actual CPU count, which is only knowable on the managed
-cluster - that part stays as an escaped ACM template.
+podsPerCore is derived from the node CPU count, which is only known on the managed cluster, so it
+uses an escaped ACM template.
 */ -}}
 {{- $cfg := (index .Values.stack (.Chart.Name | replace "-" " " | title | nospace | untitle)).config }}
 {{ "{{" }}- $cores := 0 {{ "}}" }}

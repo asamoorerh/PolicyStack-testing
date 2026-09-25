@@ -1,4 +1,4 @@
-{{- /* The MetalLB operand itself. */ -}}
+{{- /* The MetalLB operand. */ -}}
 apiVersion: metallb.io/v1beta1
 kind: MetalLB
 metadata:

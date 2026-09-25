@@ -1,8 +1,8 @@
 {{- /*
-Apply named ComplianceRemediations.
+Applies the ComplianceRemediations named in config.autoRemediate.
 
-The list is ordinary values rather than an out-of-band ConfigMap, so which remediations get applied
-is diffable, reviewable, and overridable per cluster like anything else.
+The list lives in values, not an out-of-band ConfigMap, so it is diffable, reviewable and
+overridable per cluster.
 
 Object count follows the list length, hence rawTemplate.
 */ -}}

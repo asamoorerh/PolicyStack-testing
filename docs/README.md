@@ -1,6 +1,6 @@
 # PolicyStack Documentation Index
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Available Elements
 
@@ -106,6 +106,7 @@ operatorPolicies:
 ## Notes
 
 - Place `@description:` or `@desc:` comments on the line immediately before the field
+- Consecutive annotation lines are joined, so long descriptions can wrap across lines
 - Descriptions work at any nesting level
 - Array items can be documented by placing the comment before the item
 - Both `@description:` and `@desc:` are supported (they're equivalent)

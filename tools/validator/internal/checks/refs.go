@@ -8,9 +8,9 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// PolicyRefCheck (POLICY010) verifies every sub-policy's policyRef points
-// to a parent name that (a) exists in policies[] and (b) is enabled.
-// Distinguishes the two cases in the message.
+// PolicyRefCheck (POLICY010) verifies every enabled sub-policy's policyRef
+// names a parent that exists in policies[] and is enabled. The two failures
+// are reported with different messages.
 type PolicyRefCheck struct{}
 
 func (PolicyRefCheck) ID() string  { return "POLICY010" }
@@ -23,9 +23,8 @@ func (c *PolicyRefCheck) Run(ctx Context) []Finding {
 	comp := ctx.Element.Values.Component
 
 	policies := map[string]bool{}
-	// toggled records parents whose enabled state is controlled by the component's toggles map. A
-	// sub-feature that ships off and is switched on per cluster is the intended pattern, not a
-	// mistake, so those are exempt from the "exists but is disabled" finding below.
+	// Parents governed by a toggle are exempt from "exists but is disabled": shipping a
+	// sub-feature off and enabling it per cluster is the intended pattern.
 	toggled := map[string]bool{}
 	for _, p := range comp.Policies {
 		if p.Name == "" {

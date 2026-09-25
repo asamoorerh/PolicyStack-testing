@@ -1,9 +1,8 @@
 {{- /*
-One namespace + ArgoCD instance per team in config.teams.
+A namespace and ArgoCD instance per team in config.teams.
 
-The team list is a values map, and "which clusters get which teams" is answered by the values
-cascade - put a team in values/acm/*.yaml for hub-only, or in a cluster/environment file for
-anywhere else.
+The values cascade decides which clusters get which teams: define a team in values/acm/*.yaml for
+the hub only, or in a cluster/environment file for other clusters.
 
 Object count follows the map, hence rawTemplate.
 */ -}}

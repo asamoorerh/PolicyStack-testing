@@ -2,7 +2,7 @@
 
 > OpenShift GitOps operator and the platform ArgoCD instance
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -27,7 +27,7 @@ Override an entry's `enabled` by name. Being a map, these merge cleanly through 
 
 | Toggle | Default | Description |
 | ------ | ------- | ----------- |
-| `instance` | `True` | Deploy the platform ArgoCD instance. Off where you only want the operator. |
+| `instance` | `True` | Deploy the platform ArgoCD instance. Disable to install only the operator. |
 | `ca-bundle` | `True` | Give ArgoCD the cluster's trusted CA bundle |
 | `link` | `True` | Publish a console link to ArgoCD |
 
@@ -40,7 +40,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `namespace` | `openshift-gitops` | Namespace the platform ArgoCD instance runs in |
 | `disableAdmin` | `False` | Disable the built-in admin account and rely on OpenShift OAuth |
 | `monitoring` | `False` | Expose ArgoCD metrics to the monitoring stack |
-| `kustomizeBuildOptions` | `--enable-helm --helm-command /usr/local/bin/helm` | Kustomize flags. Helm support is on; PolicyGenerator plugin flags are deliberately absent - PolicyStack does not use that plugin. |
+| `kustomizeBuildOptions` | `--enable-helm --helm-command /usr/local/bin/helm` | Kustomize flags. Enables Helm. PolicyStack does not use the PolicyGenerator plugin. |
 | `rbacPolicies` | `(list)` | ArgoCD RBAC, one CSV line per entry |
 | `ha` | `(dict)` |  |
 | `serverAutoscale` | `(dict)` |  |

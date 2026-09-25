@@ -1,6 +1,6 @@
 {{- /*
-The QuayRegistry itself. Which components Quay manages is the main thing that differs between
-clusters (external Postgres, external object storage, no Clair), so the component map is values.
+QuayRegistry. The managed component set differs most between clusters (external Postgres or
+object storage, no Clair), so it comes from values.
 */ -}}
 {{- $cfg := .Values.stack.quay.config }}
 apiVersion: quay.redhat.com/v1

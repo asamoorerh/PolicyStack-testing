@@ -1,7 +1,6 @@
 {{- /*
-The HyperConverged operand. Kept as a static manifest - nothing is promoted to `config:` yet.
-Promote a field the day a cluster needs to differ; it is a one-line change to read it from
-.Values.stack.openshiftVirtualization.config instead.
+The HyperConverged operand as a static manifest; no fields are exposed in `config:` yet. To vary a
+field per cluster, read it from .Values.stack.openshiftVirtualization.config.
 */ -}}
 apiVersion: hco.kubevirt.io/v1beta1
 kind: HyperConverged

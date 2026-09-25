@@ -1,12 +1,11 @@
 {{- /*
-One MachineHealthCheck per MachineSet, but only for the roles that are switched on.
+One MachineHealthCheck per MachineSet, for enabled roles only.
 
-The MachineSets are discovered on the managed cluster - their names and roles are not knowable at
-render time - so the loop stays as ACM templating. Which roles participate, and the timeouts, come
-from values.
+MachineSet names and roles are only known on the managed cluster, so the loop is an ACM template.
+Enabled roles and timeouts come from values.
 
-Storage nodes get their own (longer) timeouts because rebuilding a storage node is far more
-disruptive than replacing a worker.
+Storage nodes have longer timeouts because rebuilding one is far more disruptive than replacing a
+worker.
 */ -}}
 {{- $cfg := .Values.stack.machineHealthChecks.config }}
 {{ "{{" }}- $machinesets := (lookup "machine.openshift.io/v1beta1" "MachineSet" "{{ .Parameters.namespace }}" "").items {{ "}}" }}

@@ -1,6 +1,6 @@
 {{- /*
 Concatenates the two injected CA bundles into the single Secret AAP consumes. Both inputs are
-populated by cluster operators on the managed cluster, so this is a genuine runtime read.
+populated by cluster operators on the managed cluster, so they are read with ACM templating.
 */ -}}
 apiVersion: v1
 kind: Secret

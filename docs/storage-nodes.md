@@ -2,7 +2,7 @@
 
 > Dedicated storage nodes for OpenShift Data Foundation
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -39,13 +39,13 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | Key | Default | Description |
 | --- | ------- | ----------- |
 | `replicas` | `3` | Storage nodes per zone. ODF expects three for a supported topology. |
-| `zones` | `(list)` | Availability zones. Empty means "wherever the workers are". |
+| `zones` | `(list)` | AWS availability zones. Empty uses the zone of the cloned worker MachineSet. |
 | `instanceType` | `` | AWS instance type. Empty inherits from the worker MachineSet. |
 | `volumeSize` | `` | Root volume size in GiB. Empty inherits from the worker MachineSet. |
 | `numCPUs` | `` | vSphere sizing. Empty inherits from the worker MachineSet. |
 | `numCoresPerSocket` | `` |  |
 | `memoryMiB` | `` |  |
-| `nodes` | `(list)` | `replicas` nodes instead. |
+| `nodes` | `(list)` | Bare metal only: node names to designate as storage. Empty takes the first `replicas` nodes instead. |
 
 ## Policies
 

@@ -1,9 +1,8 @@
 {{- /*
-Observability: the pull secret, the Thanos object-storage config, and the MultiClusterObservability
-itself.
+Observability: the pull secret, the Thanos object storage config and the MultiClusterObservability.
 
-The pull secret and the bucket credentials are generated on the managed cluster, so those reads stay
-ACM templating; the sizing is values.
+The pull secret and bucket credentials exist only on the managed cluster, so they are read with ACM
+templating; sizing comes from values.
 */ -}}
 {{- $o := .Values.stack.advancedClusterManagement.config.observability }}
 {{- $ns := .Parameters.observabilityNamespace }}

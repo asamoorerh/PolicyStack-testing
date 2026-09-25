@@ -1,7 +1,7 @@
 {{- /*
-The StorageCluster. Every knob is a value here, including the local-storage case: pointing at a
-local-storage-backed StorageClass is just a different storageClassName and size, so it needs no
-conditional at evaluation time.
+The StorageCluster. Every setting comes from values, including the local-storage case: a
+local-storage-backed StorageClass only changes storageClassName and size, so no evaluation-time
+conditional is needed.
 */ -}}
 {{- $cfg := .Values.stack.openshiftDataFoundation.config }}
 {{- $ds := $cfg.deviceSet }}

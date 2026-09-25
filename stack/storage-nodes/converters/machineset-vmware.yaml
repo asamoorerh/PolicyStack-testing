@@ -1,7 +1,7 @@
 {{- /*
-vSphere creates one worker MachineSet per failure domain. Clone each into a MachineSet for this
-role so the new nodes land in the same failure domains as the workers - works for one domain or
-many. The workspace, network and template all come from the worker being cloned.
+vSphere creates one worker MachineSet per failure domain. Each is cloned into a MachineSet for this
+role, so the new nodes span the same failure domains as the workers. Workspace, network and
+template come from the cloned worker.
 
 Portable across node elements; see machineset-aws.yaml for how the config block is resolved.
 */ -}}

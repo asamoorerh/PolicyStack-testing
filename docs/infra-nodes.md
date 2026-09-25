@@ -2,13 +2,13 @@
 
 > Dedicated infra nodes, and moving platform workloads onto them
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Component | `infraNodes` | Dedicated infra nodes, and moving platform workloads onto them |
+| Component | `infraNodes` | Dedicated infra nodes and the platform workloads placed on them |
 | Enabled | `False` | Master control to enable/disable all policies in this element |
 
 ## Default Policy Metadata
@@ -33,7 +33,7 @@ Override an entry's `enabled` by name. Being a map, these merge cleanly through 
 | `vmware` | `False` | Clone each worker MachineSet per vSphere failure domain |
 | `ready` | `True` | Report NonCompliant until the infra nodes are ready |
 | `workloads` | `False` | Move gitops, ingress, image registry and monitoring onto infra nodes |
-| `restore` | `False` | turn it off again once the components have moved. |
+| `restore` | `False` | Move the `workloads` components back off infra nodes. Disabling `workloads` stops enforcement but does not revert placement. Enable this to revert, then disable it once the components have moved. |
 
 ## Configuration
 
@@ -42,14 +42,14 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | Key | Default | Description |
 | --- | ------- | ----------- |
 | `replicas` | `3` | Infra nodes per zone |
-| `zones` | `(list)` | Availability zones. Empty means "wherever the workers are". |
+| `zones` | `(list)` | AWS availability zones. Empty uses the zone of the cloned worker MachineSet. |
 | `instanceType` | `` | AWS instance type. Empty inherits from the worker MachineSet. |
 | `volumeSize` | `` | Root volume size in GiB. Empty inherits from the worker MachineSet. |
 | `numCPUs` | `` | vSphere sizing. Empty inherits from the worker MachineSet. |
 | `numCoresPerSocket` | `` |  |
 | `memoryMiB` | `` |  |
 | `gitopsNamespace` | `openshift-gitops` | Namespace the GitopsService lives in |
-| `maxPods` | `250` | Kubelet reservations for infra nodes |
+| `maxPods` | `250` | Kubelet max pods and resource reservations for infra nodes |
 | `systemReservedMemory` | `2Gi` |  |
 | `systemReservedCpu` | `500m` |  |
 | `kubeReservedMemory` | `1Gi` |  |
@@ -385,7 +385,7 @@ This policy stays `Pending` until every target below reports the listed complian
 | Compliance Type | `musthave` | Compliance requirement type |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
-| Raw Template | Enabled | Merges into the existing cluster-monitoring-config rather than replacing it |
+| Raw Template | Enabled | Merges placement keys into the existing cluster-monitoring-config |
 
 **Templates:**
 | Template File | Compliance Type | Description |
@@ -396,7 +396,7 @@ This policy stays `Pending` until every target below reports the listed complian
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
 | `role` | `infra` | Parameter value |
-| `components` | `['alertmanagerMain', 'prometheusK8s', 'prometheusOperator', 'kubeStateMetrics', 'telemeterClient', 'openshiftStateMetrics', 'thanosQuerier', 'monitoringPlugin']` | Monitoring components to pin. Alertmanager and Prometheus are the heavy ones. |
+| `components` | `['alertmanagerMain', 'prometheusK8s', 'prometheusOperator', 'kubeStateMetrics', 'telemeterClient', 'openshiftStateMetrics', 'thanosQuerier', 'monitoringPlugin']` | Monitoring components to pin. Alertmanager and Prometheus use the most resources. |
 
 
 ---

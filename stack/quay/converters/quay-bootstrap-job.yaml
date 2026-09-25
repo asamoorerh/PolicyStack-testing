@@ -1,9 +1,9 @@
 {{- /*
 One-shot bootstrap Job: initialises the Quay superuser, creates an initial org/repo, and stores the
-resulting credentials as secrets. The identities it creates are values rather than hardcoded.
+resulting credentials as secrets. The identities it creates come from values.
 
-The script contains no Go-template braces, so Helm's tpl pass leaves it alone; only the identity
-assignments below are templated.
+The script has no literal Go-template braces, so it needs no escaping for Helm's tpl pass; only the
+namespace, registry name and identity values are templated.
 */ -}}
 {{- $cfg := .Values.stack.quay.config }}
 apiVersion: batch/v1
@@ -61,16 +61,17 @@ spec:
               CURL_OPTS="-fsk"
               QUAY_ADMIN={{ $cfg.adminUser }}
               QUAY_USER={{ $cfg.initialUser }}
+              QUAY_USER_EMAIL={{ $cfg.initialUserEmail }}
               QUAY_USER_SECRET=$QUAY_USER
               QUAY_NAMESPACE={{ $.Parameters.namespace }}
               QUAY_HOST=$(oc get route -n $QUAY_NAMESPACE registry-quay -o jsonpath='{.spec.host}')
-              QUAY_ORG={{ $cfg.initialOrg }}
-              QUAY_ORG_EMAIL={{ $cfg.initialOrgEmail }}
-              QUAY_REPO={{ $cfg.initialRepo }}
               if [ $? -ne 0 ]; then
                 echo "Quay route does not exist yet, please wait and try again."
                 exit 1
               fi
+              QUAY_ORG={{ $cfg.initialOrg }}
+              QUAY_ORG_EMAIL={{ $cfg.initialOrgEmail }}
+              QUAY_REPO={{ $cfg.initialRepo }}
               RESULT=$(oc get secret -n $QUAY_NAMESPACE $QUAY_USER_SECRET)
               if [ $? -eq 0 ]; then
                 echo "Quay user configuration secret already exists: $QUAY_USER_SECRET in namespace $QUAY_NAMESPACE"
@@ -78,8 +79,8 @@ spec:
               fi
 
               ADMINPASS=`head -c 8 /dev/urandom | base64 | sed 's/=//'`
-              BASE64AUTH=`echo -n $QUAY_USER:$QUAY_PASSWORD | base64 -w0`
-              RESULT=$(curl -X POST -k -s https://$QUAY_HOST/api/v1/user/initialize --header 'Content-Type: application/json' --data "{ \"username\": \"quayadmin\", \"password\":\"${ADMINPASS}\", \"email\": \"quayadmin@example.com\", \"access_token\": true}")
+              BASE64AUTH=`echo -n $QUAY_ADMIN:$ADMINPASS | base64 -w0`
+              RESULT=$(curl -X POST -k -s https://$QUAY_HOST/api/v1/user/initialize --header 'Content-Type: application/json' --data "{ \"username\": \"${QUAY_ADMIN}\", \"password\":\"${ADMINPASS}\", \"email\": \"${QUAY_ADMIN}@example.com\", \"access_token\": true}")
               echo "$RESULT" | grep -q "non-empty database"
               if [ $? -eq 0 ]; then
                 echo "Quay user configuration failed, the database has been initialized."
@@ -88,7 +89,7 @@ spec:
                 echo "[INFO] Destroy any previous secrets ..."
                 oc -n $QUAY_NAMESPACE delete --ignore-not-found=true secret $QUAY_USER_SECRET
 
-                echo "[INFO] Creating quay admin secret quayadmin ..."
+                echo "[INFO] Creating quay admin secret $QUAY_ADMIN ..."
                 TOKEN=$(echo "$RESULT" | tr ',' '\n' | grep access_token | awk -F: '{print $2}' | sed 's/"//g')
                 oc -n $QUAY_NAMESPACE create secret generic {{ $cfg.adminUser }} --from-literal=token=$TOKEN --from-literal=password=$ADMINPASS --from-literal=basic="$BASE64AUTH"
 

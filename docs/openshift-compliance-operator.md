@@ -2,7 +2,7 @@
 
 > Compliance Operator running STIG scans and applying remediations
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -37,7 +37,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | --- | ------- | ----------- |
 | `profiles` | `(list)` | Profiles bound to the scan |
 | `rawResultStorage` | `(dict)` | Where raw scan results are persisted |
-| `autoRemediate` | `(list)` | ComplianceRemediation names to apply when the remediate toggle is on. Keeping the list in values rather than an out-of-band ConfigMap makes it reviewable in git. |
+| `autoRemediate` | `(list)` | ComplianceRemediation names applied when the remediate toggle is on; reviewable in git. |
 
 ## Policies
 

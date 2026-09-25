@@ -2,7 +2,7 @@
 
 > OpenShift Data Foundation: Ceph storage and the NooBaa object gateway
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -38,8 +38,8 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | --- | ------- | ----------- |
 | `resourceProfile` | `balanced` | balanced, lean or performance |
 | `defaultStorageClass` | `ocs-storagecluster-ceph-rbd` | StorageClass marked default cluster-wide. Every other class is marked non-default. |
-| `flexibleScaling` | `None` | count is not a multiple of three. Leave unset to let ODF decide. |
-| `multiCloudGateway` | `manage` | manage or ignore - whether ODF runs the NooBaa multicloud gateway |
+| `flexibleScaling` | `None` | Allow OSDs to be unevenly distributed. Set true on bare metal when the storage node count is not a multiple of three. Leave unset to let ODF decide. |
+| `multiCloudGateway` | `manage` | Whether ODF runs the NooBaa multicloud gateway (manage or ignore) |
 | `deviceSet` | `(dict)` | The disks backing Ceph |
 | `encryption` | `(dict)` | Encryption at rest |
 | `network` | `(dict)` |  |
@@ -164,7 +164,7 @@ This policy stays `Pending` until every target below reports the listed complian
 | Namespace | `<namespace>` | Policy namespace |
 | Enabled | `True` | Whether this policy is templated |
 | Severity | `medium` | Policy severity level |
-| Remediation | `inform` | live health, which nothing depends on. |
+| Remediation | `inform` | Other elements depend on this policy by name; it is the "storage is usable" contract. It asserts StorageClasses, not StorageCluster conditions: every StorageCluster condition tracks live Ceph health, and a flapping ACM dependency puts every dependent policy into Pending. The `health` policy reports live health; nothing depends on it. |
 
 #### Dependencies
 

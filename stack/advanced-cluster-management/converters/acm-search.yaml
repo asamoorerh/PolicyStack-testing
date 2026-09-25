@@ -1,8 +1,7 @@
 {{- /*
 Search database storage.
 
-storageClassName must be OMITTED rather than blanked to fall back to the cluster default - an empty
-string means "no provisioning". Helm makes that a plain conditional.
+Omit storageClassName to use the cluster default; an empty string disables provisioning.
 */ -}}
 {{- $s := .Values.stack.advancedClusterManagement.config.search }}
 apiVersion: search.open-cluster-management.io/v1alpha1

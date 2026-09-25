@@ -1,8 +1,8 @@
 stack:
   # @description: "Advanced Cluster Management hub: MultiClusterHub, observability and search"
   advancedClusterManagement:
-    # @desc: Master control to enable/disable all policies in this element. This is a hub-only
-    # @desc: element - enable it in values/acm/*.yaml.
+    # @desc: Master control to enable/disable all policies in this element. Hub-only; enable it
+    # @desc: in values/acm/*.yaml.
     enabled: false
 
     # @description: Optional hub capabilities
@@ -25,8 +25,8 @@ stack:
       # @description: ACM Search database storage
       search:
         size: 100Gi
-        # @desc: Leave empty to use the cluster default. An empty string is omitted rather than
-        # @desc: written, because blank means "no provisioning" to the API.
+        # @desc: Empty uses the cluster default. The field is then omitted, since an empty string
+        # @desc: disables provisioning.
         storageClass: ""
       # @description: Observability sizing
       observability:

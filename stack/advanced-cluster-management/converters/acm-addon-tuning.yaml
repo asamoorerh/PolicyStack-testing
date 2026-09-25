@@ -2,7 +2,7 @@
 Tunes the policy addons ACM pushes to every managed cluster: evaluation concurrency and API client
 rate limits as annotations, resource requests and limits as an AddOnDeploymentConfig.
 
-At fleet scale the defaults are the usual cause of slow policy evaluation, so these are values.
+At fleet scale the stock defaults are the usual cause of slow policy evaluation.
 */ -}}
 {{- $cfg := .Values.stack.advancedClusterManagement.config.addons }}
 {{- range $addon, $spec := $cfg }}

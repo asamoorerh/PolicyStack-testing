@@ -1,6 +1,6 @@
 {{- /*
-Inform-only readiness signal: Compliant once the API serving certificate reports Ready. Gives a
-failing or expiring cert a visible NonCompliant status instead of letting it degrade silently.
+Inform-only readiness signal: Compliant once the API serving certificate reports Ready, so a
+failing or expiring cert surfaces as NonCompliant.
 */ -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate

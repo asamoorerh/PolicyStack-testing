@@ -9,15 +9,13 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// DependencyCheck (POLICY011) resolves every dependency reference the way policy-library does and
-// reports the ones that can never be satisfied.
+// DependencyCheck (POLICY011) resolves every dependency the way policy-library does and reports
+// those that can never be satisfied.
 //
-// This matters because a bad dependency is invisible until runtime: `helm template` succeeds, ACM
-// accepts the Policy, and it then sits Pending forever on every managed cluster waiting for an
-// object that will never exist. With elements cross-referencing each other, a single typo strands a
-// whole chain.
+// A bad dependency renders and is accepted by ACM, then leaves the Policy Pending on every managed
+// cluster, along with everything that depends on it.
 //
-// Runs repo-wide so `element:` references can be resolved against the other elements under stack/.
+// Runs repo-wide so `element:` references resolve against the other elements under stack/.
 type DependencyCheck struct{}
 
 func (DependencyCheck) ID() string   { return "POLICY011" }
@@ -28,10 +26,10 @@ type elementIndex struct {
 	el *chart.Element
 	// policyEnabled[name] is the policy's effective enabled state.
 	policyEnabled map[string]bool
-	// policyRenders[name] reports whether the chart emits a Policy at all: it skips any policy
-	// with no enabled sub-policy attached.
+	// policyRenders[name] reports whether the chart emits the Policy. Policies with no enabled
+	// sub-policy are not rendered.
 	policyRenders map[string]bool
-	// subPolicies["<policyRef>/<name>"] = kind of the sub-policy declared there.
+	// subPolicies["<policyRef>/<name>"] is the kind of that sub-policy.
 	subPolicies map[string]string
 	// operators[name] is an operatorPolicy's owning policy.
 	operators map[string]string
@@ -74,7 +72,7 @@ func indexElement(el *chart.Element) *elementIndex {
 		if comp.CouldBeEnabled(p.Name, p.Enabled) {
 			mark(p.PolicyRef, p.Name, "OperatorPolicy")
 			ix.operators[p.Name] = p.PolicyRef
-			// operator policies also generate <policyRef>-<name>-ns and -status checks
+			// Operator policies also render <policyRef>-<name>-ns and -status ConfigurationPolicies.
 			ix.subPolicies[p.PolicyRef+"/"+p.Name+"-ns"] = "ConfigurationPolicy"
 			ix.subPolicies[p.PolicyRef+"/"+p.Name+"-status"] = "ConfigurationPolicy"
 		}
@@ -123,7 +121,7 @@ func (c *DependencyCheck) checkElement(ix *elementIndex, all map[string]*element
 		})
 	}
 
-	// policies[].dependencies -> default kind Policy
+	// policies[].dependencies default to kind Policy.
 	for i, p := range comp.Policies {
 		if !comp.CouldBeEnabled(p.Name, p.Enabled) {
 			continue
@@ -134,7 +132,7 @@ func (c *DependencyCheck) checkElement(ix *elementIndex, all map[string]*element
 		}
 	}
 
-	// *.extraDependencies -> default kind ConfigurationPolicy; waitForOperator -> operatorPolicies[]
+	// *.extraDependencies default to kind ConfigurationPolicy; waitForOperator names operatorPolicies[].
 	type sub struct {
 		list  string
 		idx   int
@@ -192,7 +190,7 @@ func (c *DependencyCheck) checkDep(ix *elementIndex, all map[string]*elementInde
 		add(where + ": dependency entry is missing a name")
 		return out
 	}
-	// raw names are verbatim and release pins an arbitrary external release: neither is resolvable.
+	// raw names are used verbatim and release pins an external release; neither can be resolved here.
 	if d.Raw || d.Release != "" {
 		return out
 	}
@@ -221,7 +219,7 @@ func (c *DependencyCheck) checkDep(ix *elementIndex, all map[string]*elementInde
 		return out
 	}
 
-	// kind Policy: same element by default, or a sibling element via element:
+	// kind Policy: this element, or the sibling named by element:.
 	target := ix
 	if d.Element != "" {
 		t, ok := all[d.Element]

@@ -2,7 +2,7 @@
 
 > Per-team ArgoCD instances for application delivery
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -29,7 +29,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | --- | ------- | ----------- |
 | `namespacePrefix` | `openshift-gitops` | Namespace prefix; each team gets <prefix>-<team> |
 | `argoName` | `argocd-dev` | Name of the ArgoCD resource inside each team namespace |
-| `teams` | `(dict)` | Which clusters get which teams is decided by where you set this in the cascade. |
+| `teams` | `(dict)` | Teams to create, keyed by name. Values override `defaults` below, e.g. dev:  {rbacPolicies: ["g, dev-leads, role:admin"]} test: {ha: true, resources: {server: {limits: {cpu: "1"}}}} Which clusters get which teams is decided by where you set this in the cascade. |
 | `defaults` | `(dict)` | Applied to every team unless the team overrides them |
 
 ## Policies

@@ -13,8 +13,7 @@ stack:
         # @desc: Replace unhealthy infra nodes
         enabled: true
       storage:
-        # @desc: Replace unhealthy storage nodes. Off by default - rebuilding a storage node
-        # @desc: triggers Ceph backfill and is far more disruptive than replacing a worker.
+        # @desc: Replace unhealthy storage nodes. Off by default; a rebuild triggers Ceph backfill.
         enabled: false
         # @desc: Longer than the default: storage nodes take longer to come back
         timeout: 600s

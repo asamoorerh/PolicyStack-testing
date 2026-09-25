@@ -4,7 +4,7 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Pick exactly one storage backend. `pvc` needs an RWX StorageClass; `s3` needs
+    # @description: Enable only one storage backend. `pvc` needs an RWX StorageClass; `s3` needs
     # @description: ODF's NooBaa gateway on the same cluster.
     toggles:
       # @desc: Back the registry with an RWX PersistentVolumeClaim

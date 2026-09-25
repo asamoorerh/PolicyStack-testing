@@ -5,15 +5,15 @@ stack:
     enabled: false
 
     # @description: The bootstrap Job is opinionated (it creates an initial user, org and repo), so
-    # @description: it is opt-in separately from deploying the registry itself.
+    # @description: it is opt-in separately from the registry deployment.
     toggles:
       # @desc: Run the one-shot bootstrap Job and publish the console link
       configure: false
 
     # @description: Registry configuration
     config:
-      # @desc: Which Quay components the operator manages. Set a component false when you are
-      # @desc: supplying it yourself, e.g. an external Postgres or object store.
+      # @desc: Quay components the operator manages. Set a component to false to supply it
+      # @desc: externally, e.g. Postgres or object storage.
       components:
         quay: true
         clair: true
@@ -35,13 +35,16 @@ stack:
       # @desc: Quay superusers
       superUsers:
         - quayadmin
-      # @desc: Superuser the bootstrap Job initialises
+      # @desc: Superuser the bootstrap Job initialises. Must also be listed in superUsers.
       adminUser: quayadmin
       # @desc: First non-admin user the bootstrap Job creates
       initialUser: quaydevel
+      # @desc: Email for that user
+      initialUserEmail: quaydevel@myorg.com
       # @desc: Organization the bootstrap Job creates
       initialOrg: devel
-      # @desc: Contact address for that organization (must differ from the admin's)
+      # @desc: Contact address for that organization. Quay emails are unique across users and
+      # @desc: organizations, so it must differ from every user's email.
       initialOrgEmail: devel@myorg.com
       # @desc: Repository the bootstrap Job creates in that organization
       initialRepo: example

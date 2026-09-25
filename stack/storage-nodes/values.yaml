@@ -20,7 +20,7 @@ stack:
     config:
       # @desc: Storage nodes per zone. ODF expects three for a supported topology.
       replicas: 3
-      # @desc: Availability zones. Empty means "wherever the workers are".
+      # @desc: AWS availability zones. Empty uses the zone of the cloned worker MachineSet.
       zones: []
       # @desc: AWS instance type. Empty inherits from the worker MachineSet.
       instanceType: ""
@@ -133,8 +133,8 @@ stack:
         templateParameters: *storageParams
 
       # @description: Readiness for the label-existing-nodes path, where no storage MachineSets
-      # @description: exist and machineset-ready would otherwise report Compliant with nothing
-      # @description: checked. Asserts that config.replicas labelled nodes are actually Ready.
+      # @description: exist and machineset-ready would report Compliant with nothing checked.
+      # @description: Asserts that config.replicas nodes carry the storage label.
       - name: labeled-nodes
         enabled: true
         description: "config.replicas nodes are designated for storage"

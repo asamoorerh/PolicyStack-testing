@@ -1,10 +1,8 @@
 {{- /*
-Workers already exist - the installer created them - so this scales and resizes the existing
-MachineSets rather than creating new ones. It matches both cloud shapes: on AWS there is one worker
-MachineSet per AZ, on vSphere one per failure domain, and patching each covers either.
+Scales and resizes the installer-created worker MachineSets; it does not create new ones. Each
+matching MachineSet is patched, which covers AWS (one per AZ) and vSphere (one per failure domain).
 
-Only the fields that are actually configured are patched, so an unset value leaves the installer's
-choice alone rather than overwriting it.
+Only configured fields are patched; unset values keep the installer's choice.
 */ -}}
 {{- $cfg := .Values.stack.workerNodes.config }}
 {{ "{{" }}- $infraId := (lookup "config.openshift.io/v1" "Infrastructure" "" "cluster").status.infrastructureName {{ "}}" }}

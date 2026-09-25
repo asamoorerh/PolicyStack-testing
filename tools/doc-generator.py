@@ -2,8 +2,8 @@
 """
 PolicyStack Documentation Generator
 
-Generates markdown documentation for PolicyStack elements by parsing values.yaml files
-and extracting configuration details with support for inline comment annotations at any level.
+Generates Markdown docs for each element under stack/ from its values.yaml, including
+`# @desc:` / `# @description:` comment annotations at any nesting level.
 
 Usage:
     python doc-generator.py [--output-dir docs] [--stack-dir stack]
@@ -33,7 +33,7 @@ class DocumentedValue:
 
 
 class YAMLLoader:
-    """YAML loader that preserves comments at any nesting level"""
+    """Loads values.yaml and collects @desc/@description annotations keyed by YAML path"""
     
     def __init__(self, file_path: Path):
         self.file_path = file_path
@@ -52,63 +52,66 @@ class YAMLLoader:
         return data, self.nested_comments
     
     def _parse_with_comments(self):
-        """Parse YAML with comment preservation at all levels"""
+        """Attach each annotation to the key or list item that follows it.
+
+        Consecutive annotation lines are joined. Any other line ends the run, so a later run
+        before the same key replaces an earlier one.
+        """
         lines = self.raw_content.split('\n')
         current_path = []
         indent_stack = [0]
         pending_description = None
+        in_description = False
         array_indices = defaultdict(int)
-        
+
         for i, line in enumerate(lines):
-            # Check for description comment
             desc_match = re.match(r'^(\s*)#\s*@(desc|description):\s*(.+)$', line)
             if desc_match:
-                pending_description = desc_match.group(3).strip()
+                text = desc_match.group(3).strip()
+                pending_description = f"{pending_description} {text}" if in_description else text
+                in_description = True
                 continue
-            
-            # Skip regular comments and empty lines
+            in_description = False
+
+            # Plain comments and blank lines do not clear a pending annotation.
             if line.strip().startswith('#') or not line.strip():
                 continue
             
-            # Get indentation level
             indent = len(line) - len(line.lstrip())
             
-            # Parse YAML line
-            # Handle array items
+            # List item
             array_match = re.match(r'^(\s*)- (.+)$', line)
             if array_match:
                 indent = len(array_match.group(1))
                 content = array_match.group(2)
                 
-                # Adjust path based on indentation
+                # Pop to this item's parent.
                 while indent_stack and indent <= indent_stack[-1]:
                     indent_stack.pop()
                     if current_path:
                         popped = current_path.pop()
-                        # Reset array index if we've left this array
+                        # Leaving a list resets its index.
                         if isinstance(popped, int):
                             parent_key = current_path[-1] if current_path else ''
                             array_indices[parent_key] = 0
                 
-                # Add array index to path
                 parent_key = '.'.join(str(p) for p in current_path)
                 current_index = array_indices[parent_key]
                 current_path.append(current_index)
                 array_indices[parent_key] = current_index + 1
                 
-                # Check if this array item has a name field
+                # Items with a name: are also addressable by that name.
                 name_match = re.match(r'name:\s*(.+)$', content)
                 if name_match:
                     name_value = name_match.group(1).strip().strip('"\'')
                     if pending_description:
-                        # Store description for this array item by name
                         path_key = '.'.join(str(p) for p in current_path[:-1])
                         self._set_nested_value(self.nested_comments, 
                                              path_key + f'.{name_value}', 
                                              pending_description)
                         pending_description = None
                 
-                # Handle inline key-value in array item
+                # Inline `- key: value`
                 kv_match = re.match(r'(\w+):\s*(.+)$', content)
                 if kv_match and pending_description:
                     key = kv_match.group(1)
@@ -118,24 +121,24 @@ class YAMLLoader:
                 
                 indent_stack.append(indent)
             else:
-                # Handle regular key-value pairs
+                # Mapping key
                 kv_match = re.match(r'^(\s*)([^:]+):\s*(.*)$', line)
                 if kv_match:
                     indent = len(kv_match.group(1))
                     key = kv_match.group(2).strip()
                     value = kv_match.group(3).strip()
                     
-                    # Adjust path based on indentation
+                    # Pop to this key's parent.
                     while indent_stack and indent < indent_stack[-1]:
                         indent_stack.pop()
                         if current_path:
                             popped = current_path.pop()
-                            # Reset array index if we've left an array
+                            # Leaving a list resets its index.
                             if isinstance(popped, int):
                                 parent_key = '.'.join(str(p) for p in current_path) if current_path else ''
                                 array_indices[parent_key] = 0
                     
-                    # Update or append to current path
+                    # Deeper indent opens a level; equal indent replaces the sibling key.
                     if indent_stack and indent > indent_stack[-1]:
                         current_path.append(key)
                         indent_stack.append(indent)
@@ -146,7 +149,6 @@ class YAMLLoader:
                             current_path.append(key)
                             indent_stack.append(indent)
                     
-                    # Store description if we have one pending
                     if pending_description:
                         path_key = '.'.join(str(p) for p in current_path)
                         self._set_nested_value(self.nested_comments, path_key, pending_description)
@@ -158,14 +160,11 @@ class YAMLLoader:
         current = nested_dict
         
         for key in keys[:-1]:
-            # If current is a string (a description), we need to convert it to a dict
-            # with a special __desc__ key to store the description
+            # Not reached in practice: the elif below converts strings before descending.
             if isinstance(current, str):
-                # This shouldn't happen with our structure, but handle it gracefully
                 temp_desc = current
                 current = {'__desc__': temp_desc}
-                # Update the parent to point to this new dict
-                # This is tricky, we need to navigate again
+                # Re-walk from the root to replace the string in its parent.
                 temp = nested_dict
                 for k in keys[:keys.index(key)]:
                     temp = temp[k]
@@ -173,22 +172,20 @@ class YAMLLoader:
             elif key not in current:
                 current[key] = {}
             elif isinstance(current[key], str):
-                # Convert string to dict with __desc__ key
+                # Key already has a description and now gains children; keep it as __desc__.
                 current[key] = {'__desc__': current[key]}
             
             current = current[key]
         
-        # Set the final value
         final_key = keys[-1]
         if isinstance(current, str):
-            # This shouldn't happen, but handle it
+            # Not reached in practice (see above).
             return
         
         if final_key in current and isinstance(current[final_key], dict):
-            # If there's already a dict here, store the description as __desc__
+            # Key already has child descriptions; attach this one as __desc__.
             current[final_key]['__desc__'] = value
         else:
-            # Otherwise, just set the value
             current[final_key] = value
     
     def get_description(self, path: Union[str, List]) -> Optional[str]:
@@ -205,7 +202,7 @@ class YAMLLoader:
             else:
                 return None
         
-        # Handle both direct string descriptions and dict with __desc__ key
+        # A plain string, or __desc__ on a key that also has children.
         if isinstance(current, str):
             return current
         elif isinstance(current, dict) and '__desc__' in current:
@@ -227,7 +224,6 @@ class DocumentationGenerator:
         
     def normalize_timestamp(self, content: str) -> str:
         """Replace timestamp with a placeholder for comparison"""
-        # Replace any timestamp in the format YYYY-MM-DD HH:MM:SS with a placeholder
         return re.sub(
             r'\*Generated: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\*',
             '*Generated: TIMESTAMP_PLACEHOLDER*',
@@ -254,7 +250,6 @@ class DocumentationGenerator:
         except Exception as e:
             print(f"Warning: Could not parse comments from {file_path}: {e}")
             print(f"Falling back to basic YAML loading without comments")
-            # Fall back to basic YAML loading without comments
             with open(file_path, 'r') as f:
                 data = yaml.safe_load(f) or {}
             return data, {}
@@ -266,24 +261,21 @@ class DocumentationGenerator:
         for part in path_parts:
             part_str = str(part)
             if isinstance(current, dict):
-                # Try exact match first
+                # List items resolve by index or by name; both are string keys.
                 if part_str in current:
                     current = current[part_str]
-                # Try numeric index for arrays
                 elif part_str.isdigit() and part_str in current:
                     current = current[part_str]
-                # Try by name if it's in the current dict
                 elif isinstance(part, str) and part in current:
                     current = current[part]
                 else:
                     return None
             elif isinstance(current, str):
-                # We've reached a description but still have path parts left
+                # Path continues past a leaf description.
                 return None
             else:
                 return None
         
-        # Extract description from the final value
         if isinstance(current, str):
             return current
         elif isinstance(current, dict) and '__desc__' in current:
@@ -299,7 +291,6 @@ class DocumentationGenerator:
         if not values_file.exists():
             return None
             
-        # Load chart metadata
         chart_name = element_path.name
         chart_description = "No description available"
         
@@ -309,19 +300,16 @@ class DocumentationGenerator:
                 chart_name = chart_data.get('name', chart_name)
                 chart_description = chart_data.get('description', chart_description)
         
-        # Load values with comments
         values, comments = self.load_yaml_with_comments(values_file)
         
-        # Get the component name (camelCase version of chart name)
+        # The element key under stack: is the camelCase chart name.
         component_name = self.to_camel_case(chart_name)
         
-        # Get the component configuration
         component = values.get('stack', {}).get(component_name, {})
         
         if not component:
             return None
             
-        # Generate markdown
         md = []
         md.append(f"# {chart_name} - Policy Library Documentation")
         md.append("")
@@ -330,13 +318,11 @@ class DocumentationGenerator:
         md.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
         md.append("")
         
-        # Component Configuration
         md.append("## Component Configuration")
         md.append("")
         md.append("| Parameter | Value | Description |")
         md.append("| --------- | ----- | ----------- |")
         
-        # Get component-level description
         comp_desc = self.get_field_description(comments, 'stack', component_name) or "Main component configuration"
         md.append(f"| Component | `{component_name}` | {comp_desc} |")
         
@@ -353,7 +339,6 @@ class DocumentationGenerator:
         
         md.append("")
         
-        # Default Values
         if component.get('default'):
             md.append("## Default Policy Metadata")
             md.append("")
@@ -407,7 +392,6 @@ class DocumentationGenerator:
                 md.append(f"| `{ckey}` | `{shown}` | {desc} |")
             md.append("")
 
-        # Process Policies
         policies = component.get('policies', [])
         if policies:
             md.append("## Policies")
@@ -420,7 +404,6 @@ class DocumentationGenerator:
                 self._generate_policy_section(md, policy, component, comments, 
                                             ['stack', component_name, 'policies', idx])
         
-        # Process PolicySets
         policy_sets = component.get('policySets', [])
         if policy_sets:
             md.append("## PolicySets")
@@ -432,7 +415,7 @@ class DocumentationGenerator:
                     
                 md.append(f"### 📦 PolicySet: {policy_set['name']}")
                 
-                # Try to get description by name or index
+                # description field, then annotation by name, then by index
                 desc = (policy_set.get('description') or 
                        self.get_field_description(comments, 'stack', component_name, 'policySets', policy_set['name']) or
                        self.get_field_description(comments, 'stack', component_name, 'policySets', idx))
@@ -455,7 +438,6 @@ class DocumentationGenerator:
                 md.append("---")
                 md.append("")
         
-        # Check for orphaned sub-policies
         orphaned = self._find_orphaned_policies(component)
         if orphaned['configs'] or orphaned['operators'] or orphaned['certificates']:
             md.append("## ⚠️ Warnings")
@@ -482,7 +464,6 @@ class DocumentationGenerator:
                     md.append(f"- {name}")
                 md.append("")
         
-        # Summary Statistics
         stats = self._calculate_statistics(component)
         md.append("## 📊 Summary")
         md.append("")
@@ -541,11 +522,11 @@ class DocumentationGenerator:
                                  comments: Dict, path: List):
         """Generate documentation for a single policy and its sub-policies"""
         policy_name = policy['name']
-        component_name = path[1]  # Extract component name from path
+        component_name = path[1]
         
         md.append(f"### 📋 Policy: {policy_name}")
         
-        # Get description - try by name first, then by index
+        # description field, then annotation by name, then by index
         desc = (policy.get('description') or 
                self.get_field_description(comments, *path[:-1], policy_name) or
                self.get_field_description(comments, *path))
@@ -558,7 +539,6 @@ class DocumentationGenerator:
         md.append(f"| Name | `{policy_name}-<release>` | Full policy name including release |")
         md.append(f"| Namespace | `<namespace>` | Policy namespace |")
         
-        # Get field-specific descriptions
         enabled_desc = self.get_field_description(comments, *path, 'enabled') or "Whether this policy is templated"
         md.append(f"| Enabled | `{policy.get('enabled', False)}` | {enabled_desc} |")
         
@@ -589,7 +569,6 @@ class DocumentationGenerator:
                 md.append(self._format_dependency(dep, policy_name, 'Policy'))
             md.append("")
         
-        # Compliance Metadata
         if any([policy.get('categories'), policy.get('controls'), policy.get('standards'),
                 component.get('default', {}).get('categories'),
                 component.get('default', {}).get('controls'),
@@ -618,19 +597,17 @@ class DocumentationGenerator:
             
             md.append("")
         
-        # Find associated sub-policies
         sub_policies = self._find_sub_policies(policy_name, component)
         
         if sub_policies['configs'] or sub_policies['operators'] or sub_policies['certificates']:
             md.append("#### Associated Sub-Policies")
             md.append("")
             
-            # Configuration Policies
             if sub_policies['configs']:
                 md.append("##### Configuration Policies")
                 md.append("")
                 for idx, config in enumerate(sub_policies['configs']):
-                    # Find the actual index in the original list
+                    # Annotation paths use the index in the full list, not the filtered one.
                     actual_idx = None
                     for i, c in enumerate(component.get('configPolicies', [])):
                         if c.get('name') == config.get('name'):
@@ -640,12 +617,10 @@ class DocumentationGenerator:
                         config_path = ['stack', component_name, 'configPolicies', actual_idx]
                         self._generate_config_policy_section(md, config, policy_name, comments, config_path)
             
-            # Operator Policies
             if sub_policies['operators']:
                 md.append("##### Operator Policies")
                 md.append("")
                 for idx, operator in enumerate(sub_policies['operators']):
-                    # Find the actual index
                     actual_idx = None
                     for i, o in enumerate(component.get('operatorPolicies', [])):
                         if o.get('name') == operator.get('name'):
@@ -655,12 +630,10 @@ class DocumentationGenerator:
                         operator_path = ['stack', component_name, 'operatorPolicies', actual_idx]
                         self._generate_operator_policy_section(md, operator, policy_name, comments, operator_path)
             
-            # Certificate Policies
             if sub_policies['certificates']:
                 md.append("##### Certificate Policies")
                 md.append("")
                 for idx, cert in enumerate(sub_policies['certificates']):
-                    # Find the actual index
                     actual_idx = None
                     for i, c in enumerate(component.get('certificatePolicies', [])):
                         if c.get('name') == cert.get('name'):
@@ -680,7 +653,7 @@ class DocumentationGenerator:
         config_name = config['name']
         md.append(f"###### ⚙️ Config: {config_name}")
         
-        # Get description by name or index
+        # description field, then annotation by name, then by index
         desc = (config.get('description') or 
                self.get_field_description(comments, *path[:-1], config_name) or
                self.get_field_description(comments, *path))
@@ -714,7 +687,6 @@ class DocumentationGenerator:
         
         self._generate_gating_section(md, config, policy_name)
         
-        # Template Names with descriptions
         if config.get('templateNames'):
             md.append("**Templates:**")
             md.append("| Template File | Compliance Type | Description |")
@@ -724,7 +696,6 @@ class DocumentationGenerator:
                 if isinstance(template, dict):
                     name = template.get('name', 'unknown')
                     compliance = template.get('complianceType', 'inherited')
-                    # Get description for this specific template
                     template_desc = (self.get_field_description(comments, *path, 'templateNames', name) or
                                    self.get_field_description(comments, *path, 'templateNames', t_idx) or
                                    self.get_field_description(comments, *path, 'templateNames', t_idx, 'name') or
@@ -737,7 +708,6 @@ class DocumentationGenerator:
                 md.append(f"| `converters/{name}.yaml` | {compliance} | {template_desc} |")
             md.append("")
         
-        # Template Parameters with descriptions
         if config.get('enableTemplateParameters') and config.get('templateParameters'):
             md.append("**Template Parameters:**")
             md.append("| Parameter | Value | Description |")
@@ -754,7 +724,7 @@ class DocumentationGenerator:
         operator_name = operator['name']
         md.append(f"###### 🔧 Operator: {operator_name}")
         
-        # Get description
+        # description field, then annotation by name, then by index
         desc = (operator.get('description') or 
                self.get_field_description(comments, *path[:-1], operator_name) or
                self.get_field_description(comments, *path))
@@ -788,7 +758,6 @@ class DocumentationGenerator:
         
         md.append("")
         
-        # Subscription Details with descriptions
         if operator.get('subscription'):
             sub = operator['subscription']
             md.append("**Subscription Details:**")
@@ -813,7 +782,6 @@ class DocumentationGenerator:
             
             md.append("")
         
-        # Approved Versions with descriptions
         if operator.get('versions'):
             versions_desc = self.get_field_description(comments, *path, 'versions') or ""
             md.append("**Approved Versions:**")
@@ -835,7 +803,7 @@ class DocumentationGenerator:
         cert_name = cert['name']
         md.append(f"###### 🔐 Certificate: {cert_name}")
         
-        # Get description
+        # description field, then annotation by name, then by index
         desc = (cert.get('description') or 
                self.get_field_description(comments, *path[:-1], cert_name) or
                self.get_field_description(comments, *path))
@@ -860,7 +828,6 @@ class DocumentationGenerator:
         
         md.append("")
         
-        # Duration Requirements with descriptions
         if any([cert.get('minimumDuration'), cert.get('minimumCADuration'),
                 cert.get('maximumDuration'), cert.get('maximumCADuration')]):
             md.append("**Duration Requirements:**")
@@ -876,7 +843,6 @@ class DocumentationGenerator:
             md.append(f"| CA Certificate | {cert.get('minimumCADuration', '-')} {min_ca_desc} | {cert.get('maximumCADuration', '-')} {max_ca_desc} |")
             md.append("")
         
-        # SAN Patterns with descriptions
         if cert.get('allowedSANPattern') or cert.get('disallowedSANPattern'):
             md.append("**SAN Patterns:**")
             if cert.get('allowedSANPattern'):
@@ -898,17 +864,14 @@ class DocumentationGenerator:
             'certificates': []
         }
         
-        # Find configuration policies
         for config in component.get('configPolicies', []):
             if config.get('enabled') and config.get('policyRef') == policy_name:
                 result['configs'].append(config)
         
-        # Find operator policies
         for operator in component.get('operatorPolicies', []):
             if operator.get('enabled') and operator.get('policyRef') == policy_name:
                 result['operators'].append(operator)
         
-        # Find certificate policies
         for cert in component.get('certificatePolicies', []):
             if cert.get('enabled') and cert.get('policyRef') == policy_name:
                 result['certificates'].append(cert)
@@ -923,22 +886,18 @@ class DocumentationGenerator:
             'certificates': []
         }
         
-        # Get list of enabled policies
         enabled_policies = {p['name'] for p in component.get('policies', []) if p.get('enabled')}
         
-        # Check configuration policies
         for config in component.get('configPolicies', []):
             if config.get('enabled') and config.get('policyRef'):
                 if config['policyRef'] not in enabled_policies:
                     result['configs'].append(config['name'])
         
-        # Check operator policies
         for operator in component.get('operatorPolicies', []):
             if operator.get('enabled') and operator.get('policyRef'):
                 if operator['policyRef'] not in enabled_policies:
                     result['operators'].append(operator['name'])
         
-        # Check certificate policies
         for cert in component.get('certificatePolicies', []):
             if cert.get('enabled') and cert.get('policyRef'):
                 if cert['policyRef'] not in enabled_policies:
@@ -965,26 +924,21 @@ class DocumentationGenerator:
         docs_outdated = False
         changes_needed = []
         
-        # Process each directory in the stack
         for element_path in self.stack_dir.iterdir():
             if element_path.is_dir() and not element_path.name.startswith('.'):
-                # Generate documentation content
                 doc_content = self.generate_element_docs(element_path)
                 
                 if doc_content:
                     output_file = self.output_dir / f"{element_path.name}.md"
                     
-                    # Check if file exists
                     if not output_file.exists():
                         print(f"❌ Missing: {output_file}")
                         changes_needed.append(f"Missing: {element_path.name}.md")
                         docs_outdated = True
                     else:
-                        # Read existing content
                         with open(output_file, 'r') as f:
                             existing_content = f.read()
                         
-                        # Compare ignoring timestamps
                         if not self.compare_content(existing_content, doc_content):
                             print(f"❌ Outdated: {output_file}")
                             changes_needed.append(f"Outdated: {element_path.name}.md")
@@ -992,13 +946,13 @@ class DocumentationGenerator:
                         else:
                             print(f"✓ Current: {output_file}")
         
-        # Check index file
+        # docs/README.md index
         elements = []
         for element_path in self.stack_dir.iterdir():
             if element_path.is_dir() and not element_path.name.startswith('.'):
                 values_file = element_path / "values.yaml"
                 if values_file.exists():
-                    # Load values to check if there's valid content
+                    # Index only elements whose values.yaml defines stack.<camelName>.
                     with open(values_file, 'r') as f:
                         values = yaml.safe_load(f) or {}
                     component_name = self.to_camel_case(element_path.name)
@@ -1023,7 +977,6 @@ class DocumentationGenerator:
             else:
                 print(f"✓ Current: {index_file}")
         
-        # Print summary
         print("\n" + "="*50)
         if docs_outdated:
             print("📚 Documentation Status: OUTDATED")
@@ -1117,6 +1070,7 @@ class DocumentationGenerator:
         lines.append("## Notes")
         lines.append("")
         lines.append("- Place `@description:` or `@desc:` comments on the line immediately before the field")
+        lines.append("- Consecutive annotation lines are joined, so long descriptions can wrap across lines")
         lines.append("- Descriptions work at any nesting level")
         lines.append("- Array items can be documented by placing the comment before the item")
         lines.append("- Both `@description:` and `@desc:` are supported (they're equivalent)")
@@ -1131,7 +1085,6 @@ class DocumentationGenerator:
         
         generated = []
         
-        # Process each directory in the stack
         for element_path in self.stack_dir.iterdir():
             if element_path.is_dir() and not element_path.name.startswith('.'):
                 print(f"Processing element: {element_path.name}")
@@ -1139,7 +1092,6 @@ class DocumentationGenerator:
                 doc_content = self.generate_element_docs(element_path)
                 
                 if doc_content:
-                    # Write documentation file
                     output_file = self.output_dir / f"{element_path.name}.md"
                     with open(output_file, 'w') as f:
                         f.write(doc_content)
@@ -1149,7 +1101,6 @@ class DocumentationGenerator:
                 else:
                     print(f"  ⚠ No valid configuration found for {element_path.name}")
         
-        # Generate index file
         self.generate_index(generated)
         
         print(f"\n✅ Documentation generation complete!")
@@ -1217,10 +1168,8 @@ Examples:
     )
     
     if args.check:
-        # Check mode - verify docs are up to date
         return generator.check_all_docs()
     elif args.element:
-        # Generate docs for specific element
         element_path = Path(args.stack_dir) / args.element
         if not element_path.exists():
             print(f"Error: Element '{args.element}' not found in {args.stack_dir}")
@@ -1237,7 +1186,6 @@ Examples:
             print(f"No valid configuration found for {args.element}")
             return 1
     else:
-        # Generate docs for all elements
         generator.generate_all_docs()
     
     return 0

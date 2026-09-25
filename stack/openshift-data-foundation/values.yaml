@@ -20,16 +20,13 @@ stack:
       # @desc: Allow OSDs to be unevenly distributed. Set true on bare metal when the storage node
       # @desc: count is not a multiple of three. Leave unset to let ODF decide.
       flexibleScaling: null
-      # @desc: Run Ceph CSI node plugins on every node rather than only storage nodes
-      # Ceph CSI node-plugin tolerations are deliberately NOT managed here. The field lives on
-      # csi.ceph.io OperatorConfig/ceph-csi-operator-config, which ceph-csi-operator owns; enforcing
-      # it produced an endless update/violation flap, and ceph-csi-operator only honours it when the
-      # Driver has no tolerations of its own. There is no StorageCluster field for it either -
-      # spec.placement is documented as "OCS components (except csi)" and spec.csi carries only
-      # readAffinity. Tolerations are permissive rather than restrictive, so the node plugin already
-      # runs on every schedulable node without them; they matter only for reaching nodes carrying an
-      # extra taint, which is a one-off cluster concern rather than fleet configuration.
-      # @desc: manage or ignore - whether ODF runs the NooBaa multicloud gateway
+      # Ceph CSI node-plugin tolerations are not managed. The field lives on csi.ceph.io
+      # OperatorConfig/ceph-csi-operator-config, owned by ceph-csi-operator; enforcing it caused an
+      # update/violation flap, and the operator honours it only when the Driver sets no tolerations.
+      # StorageCluster has no field for it: spec.placement excludes csi and spec.csi carries only
+      # readAffinity. The node plugin already runs on every schedulable node; tolerating extra
+      # taints is a per-cluster concern.
+      # @desc: Whether ODF runs the NooBaa multicloud gateway (manage or ignore)
       multiCloudGateway: manage
       # @description: The disks backing Ceph
       deviceSet:
@@ -80,12 +77,10 @@ stack:
         severity: medium
         disabled: false
 
-      # @description: The StorageCluster waits for dedicated storage nodes so that OSDs land on
-      # @description: them rather than on whatever nodes happen to be up first.
-      # @description: REQUIRES the storage-nodes element to be enabled on this cluster - the
-      # @description: dependency below can only be satisfied by a policy that actually renders.
-      # @description: Dependencies live inside this list item, so there is no toggle for it: to run
-      # @description: ODF without dedicated storage nodes, drop that dependency in your own values.
+      # @description: The StorageCluster waits for dedicated storage nodes so OSDs land on them.
+      # @description: Requires the storage-nodes element enabled on this cluster; the dependency
+      # @description: below is satisfied only by a rendered policy. Dependencies have no toggle: to
+      # @description: run ODF without dedicated storage nodes, drop that dependency in your values.
       - name: cluster
         enabled: true
         description: "Deploy the StorageCluster"
@@ -102,10 +97,10 @@ stack:
         enabled: true
         description: "Reports NonCompliant until ODF has published its StorageClasses"
         # @desc: Other elements depend on this policy by name; it is the "storage is usable" contract.
-        # @desc: It asserts StorageClasses rather than StorageCluster conditions on purpose - every
-        # @desc: condition on a StorageCluster tracks live Ceph health, and an ACM dependency that
-        # @desc: flaps puts every dependent policy into Pending. See the `health` policy below for
-        # @desc: live health, which nothing depends on.
+        # @desc: It asserts StorageClasses, not StorageCluster conditions: every StorageCluster
+        # @desc: condition tracks live Ceph health, and a flapping ACM dependency puts every
+        # @desc: dependent policy into Pending. The `health` policy reports live health; nothing
+        # @desc: depends on it.
         remediationAction: inform
         severity: medium
         disabled: false

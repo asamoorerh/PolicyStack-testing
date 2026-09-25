@@ -1,13 +1,12 @@
 {{- /*
-Two objects, and they need different engines.
+Two objects rendered by different engines.
 
-The first flips enableUserWorkload in the cluster's existing cluster-monitoring-config. That
-ConfigMap holds a single YAML string under data."config.yaml", so a musthave apply would REPLACE
-whatever else the cluster has set there. The existing value therefore has to be read on the managed
-cluster and merged - that is a real runtime read and stays as an escaped ACM template.
+cluster-monitoring-config: sets enableUserWorkload. data."config.yaml" is a single YAML string, so a
+musthave would replace any other settings in it. The existing value is read on the managed cluster
+and merged, which requires an escaped ACM template.
 
-The second is pure configuration, so Helm builds it from the values cascade - a dict and a toYaml
-rather than lines of conditional text.
+user-workload-monitoring-config: pure configuration, built by Helm from values as a dict and
+emitted with toYaml.
 */ -}}
 {{- $cfg := .Values.stack.userWorkloadMonitoring.config }}
 {{- $sc := $cfg.storageClass }}
@@ -25,7 +24,7 @@ rather than lines of conditional text.
     data:
       config.yaml: |
         {{ "{{" }} $existing | toYaml | autoindent {{ "}}" }}
-{{- /* Build the UWM config as a dict so the emitted YAML is structurally correct by construction. */ -}}
+{{- /* Build the UWM config as a dict and emit it with toYaml to guarantee valid YAML. */ -}}
 {{- $prom := dict "retention" $cfg.prometheus.retention
       "volumeClaimTemplate" (dict "spec" (dict "resources" (dict "requests" (dict "storage" $cfg.prometheus.storage)))) }}
 {{- if or $cfg.prometheus.storageClass $sc }}

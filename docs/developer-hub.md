@@ -2,7 +2,7 @@
 
 > Red Hat Developer Hub (Backstage) internal developer portal
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -76,11 +76,11 @@ Default policy metadata applied unless overridden per-policy
 | --------- | ----- | ----------- |
 | Name | `install-rhdh` | Operator policy identifier |
 | Namespace | `rhdh-operator` | Target namespace for operator |
-| Display Name | `Red Hat Developer Hub` | Must match the CSV displayName so the generated status check can find it |
+| Display Name | `Red Hat Developer Hub Operator` | Must match the CSV displayName so the generated status check can find it |
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
-| Upgrade Approval | `Automatic` | Pin upgrades by listing approved CSVs under `versions:` instead of changing this |
+| Upgrade Approval | `Automatic` | To pin upgrades, list approved CSVs under `versions:` and leave this Automatic |
 
 **Subscription Details:**
 | Parameter | Value | Description |

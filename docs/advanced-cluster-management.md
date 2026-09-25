@@ -2,14 +2,14 @@
 
 > Advanced Cluster Management hub: MultiClusterHub, observability and search
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
 | Component | `advancedClusterManagement` | "Advanced Cluster Management hub: MultiClusterHub, observability and search" |
-| Enabled | `False` | element - enable it in values/acm/*.yaml. |
+| Enabled | `False` | Master control to enable/disable all policies in this element. Hub-only; enable it in values/acm/*.yaml. |
 
 ## Default Policy Metadata
 
@@ -42,7 +42,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `siteConfig` | `False` | Enable the SiteConfig component, needed for cluster provisioning |
 | `search` | `(dict)` | ACM Search database storage |
 | `observability` | `(dict)` | Observability sizing |
-| `addons` | `(dict)` | stock concurrency and rate limits, which are the usual bottleneck at scale. |
+| `addons` | `(dict)` | Policy addon tuning, keyed by addon name. The shipped defaults raise the stock concurrency and rate limits, which are the usual bottleneck at scale. |
 
 ## Policies
 

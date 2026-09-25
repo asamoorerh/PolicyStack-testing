@@ -23,7 +23,8 @@ stack:
         enabled: true
         namespace: open-cluster-management
         description: "Policy for any operator installation"
-        # @desc: Set to enforce as, despite enforce not working on OperatorPolicy objects, there are ConfigPolicies we will need to enforce.
+        # @desc: Set on the Policy, so it overrides every template's action, including the
+        # @desc: OperatorPolicy below. With inform, the operator is reported missing, not installed.
         remediationAction: enforce
         severity: medium
         disabled: false
@@ -38,7 +39,7 @@ stack:
         displayName: "Red Hat OpenShift Logging"
         # @desc: Links to the install parent policy
         policyRef: install
-        # @desc: Could be a high or medium severity depending on the security requirements.
+        # @desc: High or medium, depending on security requirements
         severity: high
         # @desc: Automatically install and configure
         remediationAction: enforce

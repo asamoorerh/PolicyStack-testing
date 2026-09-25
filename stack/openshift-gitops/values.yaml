@@ -6,7 +6,7 @@ stack:
 
     # @description: Optional pieces
     toggles:
-      # @desc: Deploy the platform ArgoCD instance. Off where you only want the operator.
+      # @desc: Deploy the platform ArgoCD instance. Disable to install only the operator.
       instance: true
       # @desc: Give ArgoCD the cluster's trusted CA bundle
       ca-bundle: true
@@ -21,7 +21,7 @@ stack:
       disableAdmin: false
       # @desc: Expose ArgoCD metrics to the monitoring stack
       monitoring: false
-      # @desc: Kustomize flags. Helm support is on; PolicyGenerator plugin flags are deliberately absent - PolicyStack does not use that plugin.
+      # @desc: Kustomize flags. Enables Helm. PolicyStack does not use the PolicyGenerator plugin.
       kustomizeBuildOptions: --enable-helm --helm-command /usr/local/bin/helm
       # @desc: ArgoCD RBAC, one CSV line per entry
       rbacPolicies:

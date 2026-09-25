@@ -1,4 +1,4 @@
-{{- /* Istio CNI in ambient mode. The mesh version is a value. */ -}}
+{{- /* Istio CNI in ambient mode. */ -}}
 apiVersion: sailoperator.io/v1
 kind: IstioCNI
 metadata:

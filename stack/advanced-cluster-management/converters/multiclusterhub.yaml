@@ -1,4 +1,4 @@
-{{- /* The MultiClusterHub. All three conditionals below resolve from values, not at evaluation time. */ -}}
+{{- /* The MultiClusterHub. The conditionals below are resolved by Helm from values. */ -}}
 {{- $cfg := .Values.stack.advancedClusterManagement.config }}
 apiVersion: operator.open-cluster-management.io/v1
 kind: MultiClusterHub

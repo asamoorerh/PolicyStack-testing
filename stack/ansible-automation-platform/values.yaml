@@ -30,8 +30,7 @@ stack:
       hub:
         # @desc: Automation Hub (private content repository)
         disabled: false
-        # @description: Hub content storage, expressed as one enum rather than as separate
-        # @description: mutually-exclusive flags.
+        # @description: Hub content storage
         storage:
           # @desc: none, file (RWX PVC), or s3 (NooBaa bucket via the storage toggle)
           type: none

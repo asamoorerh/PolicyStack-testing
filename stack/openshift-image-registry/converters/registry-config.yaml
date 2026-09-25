@@ -1,6 +1,6 @@
 {{- /*
-The image registry Config. Which storage backend to use is a value; where that backend actually
-lives - the NooBaa route host, the bucket name - is discovered on the managed cluster.
+Image registry Config. The storage backend is a value; its location (NooBaa route host, bucket
+name) is discovered on the managed cluster.
 */ -}}
 {{- $cfg := .Values.stack.openshiftImageRegistry.config }}
 {{- if eq $cfg.storageType "s3" }}

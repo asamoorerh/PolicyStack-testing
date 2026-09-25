@@ -1,12 +1,12 @@
 {{- /*
-Creates one MachineSet per availability zone for this node role on AWS, cloning the cluster's worker
-MachineSet for everything that is cluster-specific: AMI, subnet, security groups, tags, credentials
-and user-data. That cloning can only happen on the managed cluster, so it stays ACM templating.
+One MachineSet per availability zone for this node role on AWS. Cluster-specific fields (AMI, subnet,
+security groups, tags, credentials, user-data) are cloned from the worker MachineSet, which is only
+readable on the managed cluster, so they use ACM templating.
 
-What comes from values: the replica count, which zones to use (empty means "wherever the workers
-are"), and the instance/volume sizing.
+From values: replica count, zones (empty uses the worker MachineSet's zone), and instance/volume
+sizing.
 
-Portable across node elements - the role comes from .Parameters and the config block is resolved
+Portable across node elements: the role comes from .Parameters and the config block is resolved
 from the chart name, so this file is byte-identical in infra-nodes and storage-nodes.
 */ -}}
 {{- $cfg := (index .Values.stack (.Chart.Name | replace "-" " " | title | nospace | untitle)).config }}

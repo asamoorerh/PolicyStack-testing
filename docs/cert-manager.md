@@ -2,7 +2,7 @@
 
 > cert-manager Operator (Red Hat build) for X.509 certificate lifecycle management
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -27,7 +27,7 @@ Override an entry's `enabled` by name. Being a map, these merge cleanly through 
 
 | Toggle | Default | Description |
 | ------ | ------- | ----------- |
-| `ca` | `True` | Cluster CA issuer. On by default - it is the default TLS issuer for the cluster. |
+| `ca` | `True` | Cluster CA issuer. On by default; it is the cluster's default TLS issuer. |
 | `api-cert` | `False` | Replace the external API serving cert (api.<domain>). Additive and SNI-matched. |
 | `ingress-cert` | `False` | Replace the default Ingress wildcard cert (*.apps.<domain>). Higher blast radius. |
 
@@ -38,7 +38,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | Key | Default | Description |
 | --- | ------- | ----------- |
 | `caName` | `policystack-ca` | Name of the CA Certificate and the ClusterIssuer that signs from it |
-| `caIssuer` | `(dict)` | Issuer/ClusterIssuer to make the CA an intermediate instead. |
+| `caIssuer` | `(dict)` | Signer for the CA. Leave name empty for a self-signed root; point it at your own Issuer/ClusterIssuer to make the CA an intermediate instead. |
 | `caDuration` | `17520h0m0s` | CA lifetime. Roots are long-lived; the serving certs they sign rotate. |
 | `caRenewBefore` | `2160h0m0s` | Renew the CA this far before expiry |
 | `leafDuration` | `8760h` | Lifetime of the serving certificates |

@@ -78,9 +78,9 @@ stack:
         complianceType: musthave
         remediationAction: enforce
         severity: medium
-        # @desc: Wait for the operator's CSV rather than racing the CRD
+        # @desc: Wait for the operator's CSV; the CRD only exists after install
         waitForOperator: virt
-        # @desc: Report compliant while waiting instead of flapping during install
+        # @desc: Report compliant while waiting; avoids flapping during install
         ignorePending: true
         templateNames:
           - name: hyperconverged

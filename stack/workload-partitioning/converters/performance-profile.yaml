@@ -1,12 +1,11 @@
 {{- /*
-PerformanceProfile pinning platform workloads onto a reserved CPU set, leaving the isolated set for
-application workloads.
+PerformanceProfile pinning platform workloads to the reserved CPU set and leaving the isolated set
+for application workloads.
 
-Every input is a plain Helm value, so the whole thing resolves at render time and no ACM templating
-is needed.
+All inputs are Helm values, so it resolves at render time without ACM templating.
 
-reserved/isolated have no safe defaults - getting them wrong degrades the node - so enabling this
-element without setting them is a hard render error rather than a silently wrong profile.
+reservedCpus and isolatedCpus have no safe defaults and a wrong value degrades the node, so leaving
+either unset fails the render.
 */ -}}
 {{- $cfg := .Values.stack.workloadPartitioning.config }}
 {{- if not $cfg.reservedCpus }}

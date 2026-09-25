@@ -1,8 +1,6 @@
 {{- /*
-BGPPeer objects, one per entry in config.bgpPeers.
-
-The key is the object name and the value is the spec verbatim, so the addressing is plain
-reviewable YAML in the values cascade rather than an opaque encoded blob.
+BGPPeer objects, one per entry in config.bgpPeers. The key is the object name and the value is the
+spec verbatim, so addressing stays reviewable in values.
 
 Object count follows the map, hence rawTemplate.
 */ -}}

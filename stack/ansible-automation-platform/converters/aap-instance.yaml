@@ -1,6 +1,6 @@
 {{- /*
-The AnsibleAutomationPlatform operand. Everything resolves from values, and the storage choice is a
-single enum rather than two mutually-exclusive flags.
+The AnsibleAutomationPlatform operand, rendered entirely from values. Hub storage is selected by
+config.hub.storage.type.
 */ -}}
 {{- $cfg := .Values.stack.ansibleAutomationPlatform.config }}
 {{- $hub := $cfg.hub | default dict }}

@@ -10,8 +10,8 @@ stack:
       # @desc: Generate NodeNetworkConfigurationPolicies from config.networking below
       nncp: false
 
-    # @description: Node network topology. Everything the NNCP generator needs lives here, so the
-    # @description: whole topology is reviewable in git.
+    # @description: Node network topology. All NNCP generator input lives here so the topology is
+    # @description: reviewable in git.
     config:
       networking:
         # @desc: Nodes the shared NNCPs apply to. Empty means all nodes.

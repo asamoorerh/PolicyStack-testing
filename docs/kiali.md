@@ -2,7 +2,7 @@
 
 > Kiali service mesh observability console
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -53,7 +53,7 @@ Default policy metadata applied unless overridden per-policy
 | --------- | ----- | ----------- |
 | Name | `install-kiali` | Operator policy identifier |
 | Namespace | `openshift-operators` | Target namespace for operator |
-| Display Name | `Kiali Operator provided by Red Hat` | Must match the CSV displayName so the generated status check can find it |
+| Display Name | `Kiali Operator` | Must match the CSV displayName so the generated status check can find it |
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

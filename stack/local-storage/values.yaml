@@ -13,7 +13,7 @@ stack:
       # @desc: Device classes to claim
       deviceTypes:
         - disk
-      # @desc: Ignore devices smaller than this - keeps boot and OS disks out
+      # @desc: Ignore devices smaller than this; keeps boot and OS disks out
       minSize: 200G
       # @desc: Optional upper bound
       maxSize: ""

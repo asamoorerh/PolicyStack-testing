@@ -1,4 +1,4 @@
-{{- /* Binds the configured profiles to the ScanSetting, which is what actually starts scanning. */ -}}
+{{- /* Binds the configured profiles to the ScanSetting. The binding starts the scan. */ -}}
 {{- $cfg := .Values.stack.openshiftComplianceOperator.config }}
 apiVersion: compliance.openshift.io/v1alpha1
 kind: ScanSettingBinding

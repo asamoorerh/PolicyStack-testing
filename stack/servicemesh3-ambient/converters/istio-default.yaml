@@ -1,4 +1,4 @@
-{{- /* The mesh control plane, ambient profile, exporting traces to the OTel collector. */ -}}
+{{- /* Mesh control plane (ambient profile), exporting traces to the OTel collector. */ -}}
 {{- $cfg := .Values.stack.servicemesh3Ambient.config }}
 apiVersion: sailoperator.io/v1
 kind: Istio

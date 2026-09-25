@@ -1,8 +1,8 @@
 {{- /*
 Bare metal has no MachineSets, so storage nodes are designated by labelling existing nodes.
 
-Either name them explicitly in config.nodes, or leave that empty and the first config.replicas nodes
-are taken. Which nodes exist is a runtime fact, so the selection stays ACM templating.
+Name them in config.nodes, or leave it empty to take the first config.replicas nodes. The node
+list is only known at runtime, so selection uses ACM templating.
 */ -}}
 {{- $cfg := .Values.stack.storageNodes.config }}
 {{ "{{" }}- $chosen := list {{ "}}" }}
@@ -12,9 +12,9 @@ are taken. Which nodes exist is a runtime fact, so the selection stays ACM templ
 {{ "{{" }}-   if $node {{ "}}" }}{{ "{{" }}- $chosen = append $chosen $node {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
 {{- else }}
-{{ "{{" }}- /* Prefer dedicated workers. Taking the first N of ALL nodes can select control-plane
-     nodes, which would put OSDs on the control plane. Fall back to every node only on a compact
-     cluster, where the masters legitimately are the workers. */ -}}
+{{ "{{" }}- /* Prefer dedicated workers: the first N of all nodes can include control-plane
+     nodes and put OSDs on them. Fall back to every node only on a compact cluster, where the
+     masters are the workers. */ -}}
 {{ "{{" }}- $workers := list {{ "}}" }}
 {{ "{{" }}- range $n := (lookup "v1" "Node" "" "").items {{ "}}" }}
 {{ "{{" }}-   if and (hasKey $n.metadata.labels "node-role.kubernetes.io/worker") (not (hasKey $n.metadata.labels "node-role.kubernetes.io/master")) {{ "}}" }}
@@ -22,10 +22,10 @@ are taken. Which nodes exist is a runtime fact, so the selection stays ACM templ
 {{ "{{" }}-   end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- if eq 0 (len $workers) {{ "}}" }}{{ "{{" }}- $workers = (lookup "v1" "Node" "" "").items {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
-{{ "{{" }}- /* Cap with slice rather than `until (min ...)`: sprig's min returns an int64 and until
-     wants an int, which fails at evaluation time with "expected int; got int64" - invisible to
-     helm template and to the validator, because only ACM ever runs this. slice is a plain Go
-     template builtin and needs no arithmetic. */ -}}
+{{ "{{" }}- /* Cap with slice, not `until (min ...)`: sprig's min returns int64 and until expects
+     int, which fails at evaluation time with "expected int; got int64". helm template and the
+     validator cannot catch this because only ACM evaluates it. slice is a Go template builtin
+     and needs no arithmetic. */ -}}
 {{ "{{" }}- $chosen = $workers {{ "}}" }}
 {{ "{{" }}- if gt (len $chosen) {{ $cfg.replicas }} {{ "}}" }}{{ "{{" }}- $chosen = slice $chosen 0 {{ $cfg.replicas }} {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
 {{- end }}

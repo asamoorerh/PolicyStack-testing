@@ -15,9 +15,8 @@ var (
 	allowedUpgrade    = []string{"Automatic", "Manual", "None"}
 )
 
-// EnumCheck (POLICY030) validates the small set of enum-shaped fields ACM
-// rejects when wrong: severity, remediationAction, complianceType,
-// upgradeApproval. Catches typos before they reach a hub.
+// EnumCheck (POLICY030) validates the enum fields ACM rejects when invalid:
+// severity, remediationAction, complianceType and upgradeApproval.
 type EnumCheck struct{}
 
 func (EnumCheck) ID() string  { return "POLICY030" }

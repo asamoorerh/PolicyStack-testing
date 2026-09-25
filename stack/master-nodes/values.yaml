@@ -4,8 +4,7 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Kubelet reservations. These size the control plane, so they are expected to
-    # @description: differ per cluster and live here rather than in templateParameters.
+    # @description: Kubelet reservations. They size the control plane and vary per cluster.
     config:
       # @desc: Maximum pods per node
       maxPods: 250

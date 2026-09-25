@@ -1,10 +1,10 @@
 {{- /*
-The SecuredCluster CR. One definition covers both the hub and the managed clusters, because which
-clusters get it is decided by the values cascade rather than by separate placements.
+The SecuredCluster CR. One definition covers the hub and managed clusters; the values cascade, not
+separate placements, decides which clusters get it.
 
-clusterName and centralEndpoint are read on the managed cluster: the first from the ACM agent's own
-kubeconfig secret, the second from the sensor-tls secret the init-bundle Job stamped. Neither is
-knowable at render time, so both stay as ACM templates.
+clusterName and centralEndpoint are read on the managed cluster: the first from the ACM agent's
+kubeconfig secret, the second from the sensor-tls secret stamped by the init-bundle Job. Both are
+unknown at render time, so they stay ACM templates.
 */ -}}
 {{- $cfg := .Values.stack.advancedClusterSecurity.config }}
 {{- $ac := $cfg.admissionControl }}
@@ -25,7 +25,7 @@ spec:
     contactImageScanners: {{ $ac.contactImageScanners }}
     failurePolicy: {{ $ac.failurePolicy }}
   scannerV4:
-    # The SecuredCluster enum is Default|AutoSense|Disabled - there is no "Enabled"
+    # The SecuredCluster enum is Default|AutoSense|Disabled; Enabled maps to AutoSense.
     scannerComponent: {{ eq $cfg.scannerV4 "Enabled" | ternary "AutoSense" $cfg.scannerV4 }}
   perNode:
     collector:

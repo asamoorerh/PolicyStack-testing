@@ -8,12 +8,12 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/checks"
 )
 
-// GitHub emits ::error / ::warning workflow commands so findings appear
-// inline on the PR diff. Format documented at:
+// GitHub writes findings as ::error / ::warning workflow commands so they
+// appear inline on the PR diff. See
 // https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
 type GitHub struct {
-	// RepoRoot lets us emit paths relative to the workspace, which GitHub
-	// requires for inline annotations.
+	// RepoRoot is stripped from file paths; inline annotations need paths
+	// relative to the workspace.
 	RepoRoot string
 }
 
@@ -55,7 +55,7 @@ func escape(s string) string {
 	return s
 }
 
-// relTo trims the leading repoRoot+/ from path so GitHub can locate the file.
+// relTo returns path relative to an absolute repoRoot, or path unchanged.
 func relTo(repoRoot, path string) string {
 	if repoRoot == "" || path == "" {
 		return path

@@ -1,9 +1,9 @@
 {{- /*
 Move the platform components back off infra nodes.
 
-Turning the `workloads` toggle off only stops enforcing the infra placement - it does not undo it,
-because ACM policies do not revert on removal. This is the explicit reverse. Each object is read
-first so only the placement keys are stripped and the rest of the spec is left alone.
+ACM does not revert objects when a policy is removed, so disabling the `workloads` toggle leaves the
+infra placement in place. This reverses it: each object is read on the managed cluster and only its
+placement fields are cleared.
 */ -}}
 {{- $cfg := .Values.stack.infraNodes.config }}
 {{- $toggles := .Values.stack.infraNodes.toggles | default dict }}

@@ -1,5 +1,5 @@
-// Package run is the top-level orchestrator: discovers elements, loads
-// fixtures, dispatches checks across the right phase, and aggregates findings.
+// Package run discovers elements, loads fixtures, runs each check in its
+// phase, and aggregates the findings.
 package run
 
 import (
@@ -32,9 +32,8 @@ type Options struct {
 	KubeconformBin string
 	SchemasDir     string
 	// ExtraValues are absolute paths appended to every (element, fixture)
-	// cascade with highest precedence. Useful for supplying baseline values
-	// (e.g. a default `selector`) when fixture cluster names don't match
-	// real per-cluster files in values/clusters/.
+	// cascade at highest precedence. Used to supply baseline values such as
+	// `selector` when fixture names have no file in values/clusters/.
 	ExtraValues   []string
 	Skip          []string
 	Only          []string
@@ -100,8 +99,8 @@ func Run(ctx context.Context, opts Options) (Result, error) {
 		mu.Unlock()
 	}
 
-	// Pre-warm dependencies for every element so chart-phase checks like
-	// helm lint don't fail on missing charts/policy-library-*.tgz.
+	// Fetch dependencies up front so helm lint in the chart phase does not
+	// fail on a missing charts/policy-library-*.tgz.
 	for _, el := range elements {
 		if err := runner.EnsureDeps(ctx, el.Dir); err != nil {
 			opts.Logger.Warn("dependency update failed", "element", el.ChartName, "err", err)
@@ -119,7 +118,7 @@ func Run(ctx context.Context, opts Options) (Result, error) {
 		}
 	}
 
-	// Phase 2: per-cluster checks (parallel, with helm template per pair).
+	// Phase 2: per-cluster checks. One helm template per (element, fixture), run in parallel.
 	type pair struct {
 		el *chart.Element
 		mc *fixtures.ManagedCluster
@@ -131,7 +130,7 @@ func Run(ctx context.Context, opts Options) (Result, error) {
 		}
 	}
 
-	// Cross-element duplicate-name accumulator (POLICY002 cross-element).
+	// Rendered parent policy names per (namespace, cluster), for cross-element POLICY002.
 	type clusterKey struct {
 		policyNs    string
 		clusterName string
@@ -169,7 +168,7 @@ func Run(ctx context.Context, opts Options) (Result, error) {
 				}
 				addFindings(fs)
 			}
-			// Collect rendered policy names for cross-element dup detection.
+			// Record parent policy names for cross-element POLICY002.
 			if c.Element != nil && c.Element.Values != nil && c.Element.Values.Component != nil {
 				ns := c.Element.Values.PolicyNamespace
 				rel := c.Cluster.ReleaseName

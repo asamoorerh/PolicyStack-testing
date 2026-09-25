@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// KubeconformCheck (POLICY080) feeds rendered manifests to kubeconform for
-// structural validation. Skipped silently when Bin is empty.
+// KubeconformCheck (POLICY080) validates rendered manifests against their
+// schemas with kubeconform. It is a no-op when Bin is empty.
 type KubeconformCheck struct {
 	Bin        string   // e.g. "kubeconform" or absolute path; empty disables check
 	SchemasDir string   // optional override (-schema-location)

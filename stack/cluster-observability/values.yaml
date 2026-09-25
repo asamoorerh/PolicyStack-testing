@@ -39,7 +39,7 @@ stack:
           name: cluster-observability-operator
           source: redhat-operators
           sourceNamespace: openshift-marketplace
-        # @desc: Pin upgrades by listing approved CSVs under `versions:` instead of changing this
+        # @desc: To pin upgrades, list approved CSVs under `versions:` and leave this Automatic
         upgradeApproval: Automatic
 
     # @description: Configuration policies

@@ -4,8 +4,8 @@ stack:
     # @desc: Master control to enable/disable all policies in this element
     enabled: false
 
-    # @description: Tracing is a large add-on (Tempo plus an ODF bucket), so it is separable from
-    # @description: the mesh itself.
+    # @description: Tracing is a large add-on (Tempo plus an ODF bucket), so it is toggled
+    # @description: separately from the mesh.
     toggles:
       # @desc: Deploy Tempo and wire the mesh and Kiali to it. Requires ODF on the same cluster.
       tracing: false

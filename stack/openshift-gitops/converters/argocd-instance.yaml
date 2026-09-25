@@ -1,8 +1,7 @@
 {{- /*
-The platform ArgoCD instance.
+The platform ArgoCD instance. Sizing comes from values.
 
-All the sizing resolves from values. There is deliberately no PolicyGenerator init-container:
-PolicyStack renders with plain Helm and needs no CMP sidecar.
+No PolicyGenerator init-container: PolicyStack renders with plain Helm and needs no CMP sidecar.
 */ -}}
 {{- $cfg := .Values.stack.openshiftGitops.config }}
 {{- $r := $cfg.resources }}

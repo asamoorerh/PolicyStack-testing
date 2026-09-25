@@ -1,6 +1,6 @@
 {{- /*
-The collector needs one ClusterRoleBinding per log type it is allowed to read, plus the writer role
-for pushing into Loki. Emitted together because the count follows config.logTypes.
+One ClusterRoleBinding per entry in config.collectorRoles, plus logging-collector-logs-writer for
+pushing into Loki. A raw template because the object count follows config.
 */ -}}
 {{- $cfg := .Values.stack.loki.config }}
 {{- range $role := concat $cfg.collectorRoles (list "logging-collector-logs-writer") }}

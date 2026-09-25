@@ -2,7 +2,7 @@
 
 > Red Hat Advanced Cluster Security: Central, secured clusters and security policies
 
-*Generated: 2026-09-25 21:46:19*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -27,7 +27,7 @@ Override an entry's `enabled` by name. Being a map, these merge cleanly through 
 
 | Toggle | Default | Description |
 | ------ | ------- | ----------- |
-| `central` | `False` | the declarative auth config, security policies and the init-bundle Job. |
+| `central` | `False` | Run Central here (the ACS hub). Exactly one cluster should have this. Also brings the declarative auth config, security policies and the init-bundle Job. |
 | `secured` | `False` | Run the secured-cluster agents here. Usually every cluster, including the hub. |
 | `console` | `True` | Publish a console link to Central. Only meaningful where Central runs. |
 
@@ -46,7 +46,7 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `admissionControl` | `(dict)` | Admission control behaviour on secured clusters |
 | `collector` | `(dict)` | Node collector |
 | `bootstrapImage` | `image-registry.openshift-image-registry.svc:5000/openshift/cli:latest` | Image used by the init-bundle Job |
-| `securityPolicies` | `(dict)` | SecurityPolicy objects, keyed by name. As values rather than built-ins they can be edited, extended or replaced per cluster. |
+| `securityPolicies` | `(dict)` | SecurityPolicy objects keyed by name; edit, extend or replace per cluster. |
 
 ## Policies
 

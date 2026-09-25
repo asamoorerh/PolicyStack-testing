@@ -1,7 +1,7 @@
-// policystack-validator runs CI-friendly checks over PolicyStack ACM-policy
-// charts: renders each element under stack/ for every fixture cluster, walks
-// the values cascade exactly like appset.yaml does at runtime, and emits
-// findings as pretty terminal output or GitHub Actions annotations.
+// policystack-validator checks the PolicyStack element charts. It resolves the
+// values cascade the same way appset.yaml does, renders each element under
+// stack/ for every fixture cluster, and reports findings as terminal output or
+// GitHub Actions annotations.
 package main
 
 import (
@@ -77,7 +77,7 @@ func realMain() error {
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 
-	// kubeconform is optional — strip from opts if not on PATH.
+	// kubeconform is optional; POLICY080 is skipped when it is not on PATH.
 	resolvedKc := *kcBin
 	if resolvedKc != "" {
 		if _, err := exec.LookPath(resolvedKc); err != nil {

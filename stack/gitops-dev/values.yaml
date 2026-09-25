@@ -47,8 +47,7 @@ stack:
         - NIST SP 800-53
 
     policies:
-      # @description: The GitOps operator supplies the ArgoCD CRD, and it lives in a different
-      # @description: element on the same cluster.
+      # @description: Requires the ArgoCD CRD from the openshift-gitops element on the same cluster.
       - name: teams
         enabled: true
         description: "Per-team ArgoCD instances"

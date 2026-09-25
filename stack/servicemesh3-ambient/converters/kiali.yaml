@@ -1,7 +1,6 @@
 {{- /*
-Kiali, wired to the cluster's Thanos for metrics and optionally to Tempo for traces.
-
-The tracing block is a plain Helm conditional driven by the values cascade.
+Kiali, wired to the cluster's Thanos for metrics and, when config.tracing.enabled is set, to Tempo
+for traces.
 */ -}}
 {{- $cfg := .Values.stack.servicemesh3Ambient.config }}
 apiVersion: kiali.io/v1alpha1

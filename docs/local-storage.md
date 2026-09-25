@@ -2,7 +2,7 @@
 
 > Local Storage operator exposing node-local disks as PVs
 
-*Generated: 2026-09-25 21:46:18*
+*Generated: 2026-09-25 22:43:48*
 
 ## Component Configuration
 
@@ -30,9 +30,9 @@ Values intended to be overridden per environment, datacenter, or cluster.
 | `storageClassName` | `nvme-storageclass` | StorageClass created from the claimed disks. Point ODF's deviceSet at this. |
 | `volumeMode` | `Block` | Block for ODF OSDs; Filesystem for general local PVs |
 | `deviceTypes` | `(list)` | Device classes to claim |
-| `minSize` | `200G` | Ignore devices smaller than this - keeps boot and OS disks out |
+| `minSize` | `200G` | Ignore devices smaller than this; keeps boot and OS disks out |
 | `maxSize` | `` | Optional upper bound |
-| `nodeSelectorKey` | `cluster.ocs.openshift.io/openshift-storage` | storage-nodes element applies. |
+| `nodeSelectorKey` | `cluster.ocs.openshift.io/openshift-storage` | Node label marking the nodes whose disks are claimed. Matches the label the storage-nodes element applies. |
 
 ## Policies
 
