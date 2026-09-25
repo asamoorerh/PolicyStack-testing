@@ -6,23 +6,28 @@ baremetal/label path never creates any, so that check finds nothing and reports 
 immediately - which makes the `ready` policy a vacuous gate, and anything depending on it (notably
 openshift-data-foundation) proceeds before the nodes are actually designated.
 
-This asserts the real thing: that config.replicas nodes carrying the storage label are Ready. Until
-they are, it forces NonCompliant with a mustnothave on an object that always exists - the same
-technique the openshift-upgrade element uses, because a ConfigurationPolicy cannot assert a count.
+This asserts DESIGNATION - that config.replicas nodes carry the storage label - and deliberately
+does NOT assert those nodes are Ready. openshift-data-foundation's `cluster` policy depends on this
+one, and an ACM dependency that is not Compliant puts the dependent policy in Pending, which stops
+it being enforced. A liveness assertion here therefore feeds back on itself: ODF load makes a
+storage node blip, this gate flips, ACM stops enforcing the StorageCluster, ODF churns, the node
+blips again. Designation is what the gate is actually for - the nodes exist and are dedicated - and
+it only changes when the label policy changes it. Live storage health is reported by
+openshift-data-foundation's own `ready` policy, and node health by the node elements.
+
+Until the labels exist, force NonCompliant with a mustnothave on an object that always exists - the
+same technique the openshift-upgrade element uses, because a ConfigurationPolicy cannot assert a
+count.
 
 Both readiness converters are harmless when not applicable: each renders an empty list, which the
 chart emits as [].
 */ -}}
 {{- $cfg := .Values.stack.storageNodes.config }}
-{{ "{{" }}- $ready := list {{ "}}" }}
+{{ "{{" }}- $designated := list {{ "}}" }}
 {{ "{{" }}- range $n := (lookup "v1" "Node" "" "").items {{ "}}" }}
-{{ "{{" }}-   if hasKey $n.metadata.labels "{{ .Parameters.readyLabel }}" {{ "}}" }}
-{{ "{{" }}-     range $c := $n.status.conditions {{ "}}" }}
-{{ "{{" }}-       if and (eq $c.type "Ready") (eq $c.status "True") {{ "}}" }}{{ "{{" }}- $ready = append $ready $n.metadata.name {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
-{{ "{{" }}-     end {{ "}}" }}
-{{ "{{" }}-   end {{ "}}" }}
+{{ "{{" }}-   if hasKey ($n.metadata.labels | default dict) "{{ .Parameters.readyLabel }}" {{ "}}" }}{{ "{{" }}- $designated = append $designated $n.metadata.name {{ "}}" }}{{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
-{{ "{{" }}- if lt (len $ready) {{ $cfg.replicas }} {{ "}}" }}
+{{ "{{" }}- if lt (len $designated) {{ $cfg.replicas }} {{ "}}" }}
 - complianceType: mustnothave
   objectDefinition:
     apiVersion: config.openshift.io/v1
@@ -30,16 +35,16 @@ chart emits as [].
     metadata:
       name: cluster
 {{ "{{" }}- else {{ "}}" }}
-{{ "{{" }}- range $name := $ready {{ "}}" }}
+{{ "{{" }}- range $name := $designated {{ "}}" }}
 - complianceType: musthave
   objectDefinition:
     apiVersion: v1
     kind: Node
     metadata:
       name: {{ "{{" }} $name {{ "}}" }}
-    status:
-      conditions:
-        - type: Ready
-          status: "True"
+      labels:
+        {{- range $k, $v := .Parameters.nodeLabels }}
+        {{ $k }}: {{ $v | quote }}
+        {{- end }}
 {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}

@@ -137,7 +137,7 @@ stack:
       # @description: checked. Asserts that config.replicas labelled nodes are actually Ready.
       - name: labeled-nodes
         enabled: true
-        description: "Labelled storage nodes are Ready"
+        description: "config.replicas nodes are designated for storage"
         policyRef: ready
         complianceType: musthave
         remediationAction: inform
