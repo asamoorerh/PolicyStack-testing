@@ -28,7 +28,7 @@ stack:
         enabled: true
         description: "Red Hat Developer Hub (Backstage) internal developer portal"
         # @desc: Must match the CSV displayName so the generated status check can find it
-        displayName: "Red Hat Developer Hub"
+        displayName: "Red Hat Developer Hub Operator"
         policyRef: install
         severity: medium
         remediationAction: enforce
