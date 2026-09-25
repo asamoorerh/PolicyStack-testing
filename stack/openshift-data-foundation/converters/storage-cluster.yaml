@@ -1,7 +1,11 @@
 {{- /*
-The StorageCluster. Every knob is a value here, including the local-storage case: pointing at a
-local-storage-backed StorageClass is just a different storageClassName and size, so it needs no
-conditional at evaluation time.
+The StorageCluster. Every setting comes from values, including the local-storage case: a
+local-storage-backed StorageClass only changes storageClassName and size, so no evaluation-time
+conditional is needed.
+
+cephBlockPools.defaultStorageClass is true only when config.defaultStorageClass is the RBD class ODF
+creates (<name>-ceph-rbd). While true, ocs-client-operator re-applies is-default-class "true" on
+every reconcile and overrides the default-storageclass policy.
 */ -}}
 {{- $cfg := .Values.stack.openshiftDataFoundation.config }}
 {{- $ds := $cfg.deviceSet }}
@@ -51,7 +55,7 @@ spec:
     reconcileStrategy: {{ $cfg.multiCloudGateway }}
   managedResources:
     cephBlockPools:
-      defaultStorageClass: true
+      defaultStorageClass: {{ eq $cfg.defaultStorageClass (printf "%s-ceph-rbd" .Parameters.name) }}
     cephNonResilientPools:
       count: 1
       resources: {}

@@ -1,8 +1,7 @@
 {{- /*
-Inform-only live health of the StorageCluster. Deliberately NOT part of the `ready` contract: these
-conditions track current Ceph health and flap on any mon/OSD restart or resourceProfile change, and
-anything that depended on them would be paused by ACM every time they did. Nothing depends on this
-policy, so it is free to report the truth.
+Inform-only live health of the StorageCluster, kept out of the `ready` contract. These conditions
+track current Ceph health and flap on any mon/OSD restart or resourceProfile change, and ACM would
+pause any dependent policy each time. Nothing depends on this policy.
 */ -}}
 apiVersion: ocs.openshift.io/v1
 kind: StorageCluster
