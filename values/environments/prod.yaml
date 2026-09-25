@@ -1,1 +1,35 @@
-#stack:
+# Security and compliance baseline every prod cluster gets, regardless of site or platform.
+# Selected by the label: config.example.com/environment.10=prod
+#
+# Cluster-specific workloads live in values/clusters/<cluster>.yaml instead.
+stack:
+  # Certificate lifecycle. The CA ClusterIssuer is on by default and is what other components
+  # reference as their TLS issuer. Replacing the API or Ingress serving certs stays off: both patch
+  # cluster-wide endpoints and should be turned on deliberately, per cluster.
+  certManager:
+    enabled: true
+
+  # External secret sync. Operator only until a ClusterSecretStore is configured.
+  externalSecretsOperator:
+    enabled: true
+
+  # STIG scanning. Scans are observational; applying remediations reboots nodes, so `remediate`
+  # stays off until the first scan results have been reviewed.
+  openshiftComplianceOperator:
+    enabled: true
+
+  # Opinionated cluster remediations.
+  manualRemediations:
+    enabled: true
+    toggles:
+      # Removes the Samples Operator imagestreams. Safe, and frees a noticeable amount of pull
+      # traffic and etcd space on a lab cluster.
+      remove-samples: true
+      # Registry allowlist is ENFORCED cluster-wide: anything not listed can no longer be pulled.
+      # Left off until the registries this cluster actually pulls from are confirmed against
+      # config.allowedRegistries - a missing entry breaks new image pulls.
+      registries: false
+
+  # Let cluster DNS schedule onto every node, including tainted ones.
+  openshiftDns:
+    enabled: true
