@@ -21,7 +21,14 @@ stack:
       # @desc: count is not a multiple of three. Leave unset to let ODF decide.
       flexibleScaling: null
       # @desc: Run Ceph CSI node plugins on every node rather than only storage nodes
-      csiOnAllNodes: true
+      # Ceph CSI node-plugin tolerations are deliberately NOT managed here. The field lives on
+      # csi.ceph.io OperatorConfig/ceph-csi-operator-config, which ceph-csi-operator owns; enforcing
+      # it produced an endless update/violation flap, and ceph-csi-operator only honours it when the
+      # Driver has no tolerations of its own. There is no StorageCluster field for it either -
+      # spec.placement is documented as "OCS components (except csi)" and spec.csi carries only
+      # readAffinity. Tolerations are permissive rather than restrictive, so the node plugin already
+      # runs on every schedulable node without them; they matter only for reaching nodes carrying an
+      # extra taint, which is a one-off cluster concern rather than fleet configuration.
       # @desc: manage or ignore - whether ODF runs the NooBaa multicloud gateway
       multiCloudGateway: manage
       # @description: The disks backing Ceph
@@ -158,7 +165,6 @@ stack:
         ignorePending: true
         templateNames:
           - name: storage-cluster
-          - name: ceph-csi-config
         enableTemplateParameters: true
         templateParameters: &odfParams
           name: ocs-storagecluster

@@ -77,7 +77,6 @@ stack:
       # StorageClass - so the rawTemplate loop is exercised without changing cluster behaviour
       # mid-test. Flip to ocs-storagecluster-ceph-rbd once ODF is healthy if you want that too.
       defaultStorageClass: gp3-csi
-      csiOnAllNodes: true
 
   # Needed by loki for the ClusterLogForwarder CRD.
   openshiftLogging:
