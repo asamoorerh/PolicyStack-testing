@@ -93,13 +93,28 @@ stack:
 
       - name: ready
         enabled: true
-        description: "Reports NonCompliant until the StorageCluster is Available"
-        # @desc: Other elements depend on this policy by name; it is the "storage is usable" contract
+        description: "Reports NonCompliant until ODF has published its StorageClasses"
+        # @desc: Other elements depend on this policy by name; it is the "storage is usable" contract.
+        # @desc: It asserts StorageClasses rather than StorageCluster conditions on purpose - every
+        # @desc: condition on a StorageCluster tracks live Ceph health, and an ACM dependency that
+        # @desc: flaps puts every dependent policy into Pending. See the `health` policy below for
+        # @desc: live health, which nothing depends on.
         remediationAction: inform
         severity: medium
         disabled: false
         dependencies:
           - name: cluster
+
+      # @description: Live StorageCluster health, split out of `ready` so that its flapping cannot
+      # @description: pause the five elements that depend on `ready`. Nothing depends on this one.
+      - name: health
+        enabled: true
+        description: "Reports live StorageCluster health"
+        remediationAction: inform
+        severity: medium
+        disabled: false
+        dependencies:
+          - name: ready
 
       - name: config
         enabled: true
@@ -151,13 +166,26 @@ stack:
 
       - name: available
         enabled: true
-        description: "StorageCluster readiness"
+        description: "ODF StorageClasses exist"
         policyRef: ready
         complianceType: musthave
         remediationAction: inform
         severity: medium
+        rawTemplate: true
         templateNames:
           - name: storage-cluster-ready
+        enableTemplateParameters: true
+        templateParameters: *odfParams
+
+      - name: conditions
+        enabled: true
+        description: "StorageCluster reports Available and not Degraded"
+        policyRef: health
+        complianceType: musthave
+        remediationAction: inform
+        severity: medium
+        templateNames:
+          - name: storage-cluster-health
         enableTemplateParameters: true
         templateParameters: *odfParams
 
