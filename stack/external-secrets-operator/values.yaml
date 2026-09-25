@@ -35,9 +35,10 @@ stack:
         complianceType: musthave
         namespace: external-secrets-operator
         operatorGroup:
+          # No targetNamespaces: this operator only advertises AllNamespaces, so an OperatorGroup
+          # scoped to its own namespace makes the CSV fail with
+          # "OwnNamespace InstallModeType not supported".
           name: external-secrets-operator-group
-          targetNamespaces:
-            - external-secrets-operator
         subscription:
           channel: stable-v1
           name: openshift-external-secrets-operator

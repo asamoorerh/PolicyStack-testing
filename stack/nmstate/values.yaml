@@ -99,7 +99,7 @@ stack:
         upgradeApproval: Automatic
 
     configPolicies:
-      - name: instance
+      - name: nmstate-instance
         enabled: true
         description: "NMState instance"
         policyRef: config

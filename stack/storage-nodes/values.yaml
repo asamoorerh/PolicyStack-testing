@@ -75,7 +75,7 @@ stack:
         disabled: false
 
     configPolicies:
-      - name: machinesets-aws
+      - name: storage-machinesets
         enabled: true
         description: "Storage MachineSets cloned from the worker MachineSet"
         policyRef: aws
@@ -93,7 +93,7 @@ stack:
             node-role.kubernetes.io/infra: ""
             cluster.ocs.openshift.io/openshift-storage: ""
 
-      - name: machinesets-vmware
+      - name: storage-machinesets
         enabled: true
         description: "Storage MachineSets per vSphere failure domain"
         policyRef: vmware
@@ -119,7 +119,7 @@ stack:
         enableTemplateParameters: true
         templateParameters: *storageParams
 
-      - name: nodes-ready
+      - name: storage-replicas
         enabled: true
         description: "Storage MachineSet readiness"
         policyRef: ready

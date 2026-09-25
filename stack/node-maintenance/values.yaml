@@ -35,9 +35,10 @@ stack:
         complianceType: musthave
         namespace: openshift-workload-availability
         operatorGroup:
+          # No targetNamespaces: this operator only advertises AllNamespaces, so an OperatorGroup
+          # scoped to its own namespace makes the CSV fail with
+          # "OwnNamespace InstallModeType not supported".
           name: node-maintenance-operator-group
-          targetNamespaces:
-            - openshift-workload-availability
         subscription:
           channel: stable
           name: node-maintenance-operator

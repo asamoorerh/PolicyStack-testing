@@ -45,7 +45,7 @@ stack:
     # @description: Configuration policies
     configPolicies:
       # @description: Adds the cluster-monitoring label so the operator's metrics are scraped
-      - name: ns-monitoring
+      - name: cluster-observability-ns-monitoring
         enabled: true
         description: "Adds openshift.io/cluster-monitoring label to the operator namespace"
         policyRef: install

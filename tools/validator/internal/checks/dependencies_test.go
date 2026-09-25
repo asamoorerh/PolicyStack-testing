@@ -329,3 +329,89 @@ func TestPolicy011_ToggledOffTargetIsNotAnError(t *testing.T) {
 		t.Fatalf("a toggle-governed target should not be reported, got: %+v", got)
 	}
 }
+
+func TestPolicy003_CrossElementTemplateNameCollision(t *testing.T) {
+	// The real-world failure: two elements each with policies[].name=install and
+	// configPolicies[].name=ns-monitoring both render a ConfigurationPolicy called
+	// "install-ns-monitoring". ACM rejects the second with "Template name must be unique".
+	mk := func(chartName, key string) *chart.Element {
+		return elementNamed(t, chartName, key, `
+    policies:
+      - name: install
+        enabled: true
+    configPolicies:
+      - name: ns-monitoring
+        enabled: true
+        policyRef: install
+`)
+	}
+	got := (&SubPolicyNameCheck{}).Run(Context{AllElements: []*chart.Element{
+		mk("cert-manager", "certManager"), mk("cluster-observability", "clusterObservability"),
+	}})
+	if len(got) != 2 {
+		t.Fatalf("expected both elements reported, got %d: %+v", len(got), got)
+	}
+	for _, f := range got {
+		if !strings.Contains(f.Message, "install-ns-monitoring") || f.RuleID != "POLICY003" {
+			t.Errorf("unexpected finding: %+v", f)
+		}
+	}
+}
+
+func TestPolicy003_ElementSpecificNamesAreSilent(t *testing.T) {
+	a := elementNamed(t, "cert-manager", "certManager", `
+    policies:
+      - name: install
+        enabled: true
+    configPolicies:
+      - name: cert-manager-ns-monitoring
+        enabled: true
+        policyRef: install
+`)
+	b := elementNamed(t, "cluster-observability", "clusterObservability", `
+    policies:
+      - name: install
+        enabled: true
+    configPolicies:
+      - name: cluster-observability-ns-monitoring
+        enabled: true
+        policyRef: install
+`)
+	if got := (&SubPolicyNameCheck{}).Run(Context{AllElements: []*chart.Element{a, b}}); len(got) != 0 {
+		t.Fatalf("expected no findings, got: %+v", got)
+	}
+}
+
+func TestPolicy003_CoversToggledOffAndOperatorTriples(t *testing.T) {
+	// Both were real misses: a collision hidden behind an off-by-default toggle, and the -ns /
+	// -status templates an operatorPolicy generates alongside itself.
+	mk := func(chartName, key string) *chart.Element {
+		return elementNamed(t, chartName, key, `
+    toggles:
+      aws: false
+    policies:
+      - name: aws
+        enabled: true
+    operatorPolicies:
+      - name: thing
+        enabled: true
+        policyRef: aws
+`)
+	}
+	got := (&SubPolicyNameCheck{}).Run(Context{AllElements: []*chart.Element{
+		mk("infra-nodes", "infraNodes"), mk("storage-nodes", "storageNodes"),
+	}})
+	names := map[string]bool{}
+	for _, f := range got {
+		for _, n := range []string{"aws-thing", "aws-thing-ns", "aws-thing-status"} {
+			if strings.Contains(f.Message, "\""+n+"\"") {
+				names[n] = true
+			}
+		}
+	}
+	for _, n := range []string{"aws-thing", "aws-thing-ns", "aws-thing-status"} {
+		if !names[n] {
+			t.Errorf("expected %q to be reported as colliding; got %+v", n, got)
+		}
+	}
+}

@@ -117,8 +117,9 @@ func (c *NameLengthCheck) Run(ctx Context) []Finding {
 	return out
 }
 
-// DuplicateNameCheck (POLICY002) catches two policies (across all elements
-// in the same policyNamespace) that would render to the same metadata.name.
+// DuplicateNameCheck (POLICY002) catches two entries WITHIN one element that would render to the
+// same metadata.name. Collisions BETWEEN elements are POLICY003 - a sub-policy name carries no
+// element component, so those cannot be seen from a single element's values.
 type DuplicateNameCheck struct{}
 
 func (DuplicateNameCheck) ID() string { return "POLICY002" }
