@@ -1,6 +1,5 @@
-// Package sourceloc walks a yaml.v3 Node tree by path and returns the
-// (line, column) of a leaf value. Used so findings can pin to the exact
-// values.yaml line a developer needs to fix.
+// Package sourceloc resolves a key path in a yaml.v3 Node tree to its line
+// and column, so findings point at the values.yaml line to fix.
 package sourceloc
 
 import (
@@ -9,14 +8,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Loc is a 1-based file location. Zero values mean "unknown".
+// Loc is a 1-based file location. The zero value means unknown.
 type Loc struct {
 	Line, Col int
 }
 
-// Find walks doc by path and returns the location of the resolved node.
-// Path segments index by map key (string) or array index (decimal string).
-// Returns zero Loc if any segment fails to resolve.
+// Find returns the location of the node at path. Each segment is a map key
+// or a decimal sequence index. It returns the zero Loc if any segment does
+// not resolve.
 func Find(doc *yaml.Node, path ...string) Loc {
 	n := walk(doc, path)
 	if n == nil {
@@ -25,7 +24,7 @@ func Find(doc *yaml.Node, path ...string) Loc {
 	return Loc{Line: n.Line, Col: n.Column}
 }
 
-// FindNode is Find but returns the node itself (or nil).
+// FindNode returns the node at path, or nil.
 func FindNode(doc *yaml.Node, path ...string) *yaml.Node {
 	return walk(doc, path)
 }

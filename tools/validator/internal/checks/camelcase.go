@@ -7,12 +7,12 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// CamelCaseCheck (POLICY090) ensures the single key under `stack:` in
-// values.yaml matches the camelCase form of Chart.yaml's `name:`.
-// A mismatch causes policy-library to silently render zero policies.
+// CamelCaseCheck (POLICY090) checks that the key under `stack:` in
+// values.yaml is the camelCase form of Chart.yaml's `name:`. On a mismatch
+// policy-library renders no policies and reports no error.
 type CamelCaseCheck struct{}
 
-func (CamelCaseCheck) ID() string  { return "POLICY090" }
+func (CamelCaseCheck) ID() string   { return "POLICY090" }
 func (CamelCaseCheck) Phase() Phase { return PhaseChart }
 
 func (c *CamelCaseCheck) Run(ctx Context) []Finding {

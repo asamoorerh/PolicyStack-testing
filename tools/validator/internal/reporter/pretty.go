@@ -8,8 +8,8 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/checks"
 )
 
-// Pretty renders findings to a TTY-friendly stream. Colors are disabled
-// when NO_COLOR is set or stdout isn't a terminal.
+// Pretty writes human-readable findings. Color is disabled when NoColor is
+// set, NO_COLOR is set, or w is not a terminal.
 type Pretty struct {
 	NoColor bool
 }
@@ -80,8 +80,8 @@ func color(s string, on bool, code string) string {
 	return code + s + ansiReset
 }
 
-// isTerminal returns true when w is a TTY. Avoids importing x/term to keep
-// deps minimal — checks via syscall on *os.File.
+// isTerminal reports whether w is a character device. Avoids a dependency
+// on x/term.
 func isTerminal(w io.Writer) bool {
 	f, ok := w.(*os.File)
 	if !ok {

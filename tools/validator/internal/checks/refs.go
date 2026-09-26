@@ -8,12 +8,12 @@ import (
 	"github.com/PolicyStack/PolicyStack/tools/validator/internal/sourceloc"
 )
 
-// PolicyRefCheck (POLICY010) verifies every sub-policy's policyRef points
-// to a parent name that (a) exists in policies[] and (b) is enabled.
-// Distinguishes the two cases in the message.
+// PolicyRefCheck (POLICY010) verifies every enabled sub-policy's policyRef
+// names a parent that exists in policies[] and is enabled. The two failures
+// are reported with different messages.
 type PolicyRefCheck struct{}
 
-func (PolicyRefCheck) ID() string  { return "POLICY010" }
+func (PolicyRefCheck) ID() string   { return "POLICY010" }
 func (PolicyRefCheck) Phase() Phase { return PhaseChart }
 
 func (c *PolicyRefCheck) Run(ctx Context) []Finding {
@@ -23,11 +23,17 @@ func (c *PolicyRefCheck) Run(ctx Context) []Finding {
 	comp := ctx.Element.Values.Component
 
 	policies := map[string]bool{}
+	// Parents governed by a toggle are exempt from "exists but is disabled": shipping a
+	// sub-feature off and enabling it per cluster is the intended pattern.
+	toggled := map[string]bool{}
 	for _, p := range comp.Policies {
 		if p.Name == "" {
 			continue
 		}
-		policies[p.Name] = p.Enabled
+		policies[p.Name] = comp.IsEnabled(p.Name, p.Enabled)
+		if _, ok := comp.Toggles[p.Name]; ok {
+			toggled[p.Name] = true
+		}
 	}
 
 	var out []Finding
@@ -47,6 +53,9 @@ func (c *PolicyRefCheck) Run(ctx Context) []Finding {
 			return
 		}
 		if !enabled {
+			if toggled[ref] {
+				return
+			}
 			loc := sourceloc.Find(ctx.Element.ValuesDoc, "stack", ctx.Element.StackKey, valuePath, strconv.Itoa(idx), "policyRef")
 			out = append(out, Finding{
 				RuleID: c.ID(), Severity: SevError,
@@ -58,19 +67,19 @@ func (c *PolicyRefCheck) Run(ctx Context) []Finding {
 	}
 
 	for i, p := range comp.ConfigPolicies {
-		if !p.Enabled {
+		if !comp.IsEnabled(p.Name, p.Enabled) {
 			continue
 		}
 		emit(p.PolicyRef, p.Name, "configPolicies", i)
 	}
 	for i, p := range comp.OperatorPolicies {
-		if !p.Enabled {
+		if !comp.IsEnabled(p.Name, p.Enabled) {
 			continue
 		}
 		emit(p.PolicyRef, p.Name, "operatorPolicies", i)
 	}
 	for i, p := range comp.CertificatePolicies {
-		if !p.Enabled {
+		if !comp.IsEnabled(p.Name, p.Enabled) {
 			continue
 		}
 		emit(p.PolicyRef, p.Name, "certificatePolicies", i)

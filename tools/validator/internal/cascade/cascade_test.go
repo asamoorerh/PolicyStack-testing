@@ -16,7 +16,7 @@ func TestResolve_managedCluster(t *testing.T) {
 			Labels: map[string]string{
 				"config.example.com/environment.10": "prod",
 				"config.example.com/datacenter.20":  "dc1",
-				"unrelated":                          "x",
+				"unrelated":                         "x",
 			},
 		},
 	}
@@ -59,8 +59,8 @@ func TestResolve_localClusterHub(t *testing.T) {
 		Metadata: fixtures.Metadata{
 			Name: "local-cluster",
 			Labels: map[string]string{
-				"local-cluster":                     "true",
-				"config.example.com/datacenter.10":  "dc1",
+				"local-cluster":                    "true",
+				"config.example.com/datacenter.10": "dc1",
 			},
 		},
 	}
@@ -87,7 +87,7 @@ func TestResolve_localClusterHub(t *testing.T) {
 
 func TestResolve_priorityOrdering(t *testing.T) {
 	root := mkRepo(t)
-	// higher priority must appear LATER in ValueFiles list
+	// Higher priority must come later in ValueFiles.
 	mc := &fixtures.ManagedCluster{
 		Metadata: fixtures.Metadata{
 			Name: "x",
@@ -127,7 +127,7 @@ func TestResolve_duplicatePriority(t *testing.T) {
 		},
 	}
 	r := Resolve(mc, filepath.Join(root, "stack/foo"), "foo", root, filepath.Join(root, "values"), "example.com")
-	// Different categories, same priority — that's fine, no issue.
+	// Different categories may share a priority.
 	if len(r.LabelIssues) != 0 {
 		t.Fatalf("unexpected label issues: %+v", r.LabelIssues)
 	}

@@ -89,6 +89,38 @@ Documentation is generated as markdown files in the `docs/` directory (or specif
 
 This automation ensures your PolicyStack documentation remains accurate, comprehensive, and aligned with your actual configurations, making it easier for teams to understand, audit, and maintain your cluster policies.
 
+### Validation
+
+`tools/validator` renders every element for each test cluster in `tools/validator/testdata/clusters`, using the same values cascade as the ApplicationSet, and checks the result. CI runs it on pull requests that change charts, values or the validator.
+
+Requires Go and `helm`. `kubeconform` is optional; without it, POLICY080 is skipped.
+
+```sh
+make -C tools/validator build
+tools/validator/bin/policystack-validator --repo-root . --extra-values tools/validator/testdata/baseline.yaml
+```
+
+`baseline.yaml` supplies the `selector` that the ApplicationSet passes in at runtime.
+
+A clean run prints `ok: no findings`. Otherwise each finding gives its severity, rule, element, and the file and line to fix:
+
+```
+error POLICY020 [metallb] configPolicies[0] "metallb-instance" references templateNames[0] "metallb-crd" but converters/metallb-crd.yaml does not exist
+    at /path/to/policystack/stack/metallb/values.yaml:107:19
+error POLICY030 [kiali] policies[0].severity = "hgh"; allowed: [low medium high critical]
+    at /path/to/policystack/stack/kiali/values.yaml:22:19
+warning POLICY021 [metallb] converters/metallb-cr.yaml is not referenced by any templateNames[].name
+    at /path/to/policystack/stack/metallb/converters/metallb-cr.yaml:1
+
+2 error(s), 1 warning(s)
+```
+
+Exit codes: `0` no errors, `1` errors found (warnings too with `--severity warning`), `2` the validator itself failed.
+
+Useful flags: `--only` and `--skip` take comma-separated rule IDs, `--github` emits pull request annotations, and `-v` enables debug logging. The rules are listed in [tools/validator/README.md](tools/validator/README.md#rules).
+
+The pull request workflows that run the validator and keep `docs/` current are described in [docs/workflows.md](docs/workflows.md).
+
 ## Values File Structure for GitOps
 
 This document explains how values files are organized and merged in this GitOps implementation using Argo CD ApplicationSets.
@@ -141,7 +173,7 @@ Currently, there is a single label for any kind of git configuration.
 `git.example.com/revision`: This is used to specify the revision name for the cluster. This could be a tag or branch name.
 ***NOTE***: branch names/tags cannot have forward slashes in them. Labels in Kubernetes cannot contain forward slashes in label values. 
 
-This configuration allows for addition of new values without the need to change the ApplicationSet. Now, if `tenant` values are needed, then `config.example.com/tenant.3=tenant1` can be added to a cluster. This would allow `../../values/tenant/tenant1.yaml` to be created.
+This configuration allows for addition of new values without the need to change the ApplicationSet. Now, if `tenant` values are needed, then `config.example.com/tenant.3=tenant1` can be added to a cluster. This would allow `../../values/tenants/tenant1.yaml` to be created; the ApplicationSet appends `s` to the type for the directory name. See `values/tenants/payments.yaml`.
 ***NOTE***: Not every values file needs to be created. See [here](#missing-values-files) for more information.
 ## Values File Hierarchy
 
@@ -151,7 +183,7 @@ Values files are loaded in a specific, but dynamic, order, with later files over
 2. `../../values.yaml` - Global values across all applications
 3. `../../values/environments/<environment>.yaml` - Environment-specific values
 4. `../../values/datacenters/<datacenter>.yaml` - Datacenter-specific values
-5. `../../values/<type>/<value>.yaml` - Dynamically generated values based on the above mentioned config labels. See [here](#config-labels). Priority 3 will come after datacenter and 4 will have more priority over 3
+5. `../../values/<type>s/<value>.yaml` - Dynamically generated values based on the above mentioned config labels. See [here](#config-labels). Priority 3 will come after datacenter and 4 will have more priority over 3
 6. Cluster-specific values (depends on cluster type):
    - For local-clusters (ACM hub):
      - `../../values/acm/acm-<datacenter>.yaml`
@@ -177,7 +209,7 @@ repository/
     │   ├── dc1.yaml # (4) Datacenter-specific values for dc1
     │   ├── dc2.yaml
     |   └── ...
-    ├── <type>/
+    ├── <type>s/
     │   ├── <value>.yaml # (4) Dynamic values specified by labels. 
     ├── acm/
     │   ├── acm-dc1.yaml # (5a) ACM specific values for dc1
@@ -187,6 +219,23 @@ repository/
         ├── cluster1.yaml # (5c) Cluster-specific values for cluster1
         └── cluster2.yaml
 ```
+
+### Example Values Files
+
+A starting point, not a complete configuration. Copy and rename them to match your clusters and sites.
+
+| File | Shows |
+| ---- | ----- |
+| `values/environments/prod.yaml` | Baseline every prod cluster gets |
+| `values/datacenters/dc2.yaml` | Site facts (mirror registry allowlist); turns no element on |
+| `values/platforms/<platform>.yaml` | Platform toggles for the node elements |
+| `values/tenants/payments.yaml` | A custom label category |
+| `values/acm/acm-dc1.yaml`, `values/clusters/acm-dc1.yaml` | The ACM hub |
+| `values/clusters/prod-east-1.yaml` | A managed prod cluster on AWS |
+| `values/clusters/nonprod-west-1.yaml` | A managed nonprod cluster using the dc2 site values |
+
+`prod-east-1` and `nonprod-west-1` match the validator fixtures in `tools/validator/testdata/clusters`,
+so CI renders them whenever charts or values change.
 
 ## How Values Files Are Merged
 
@@ -211,7 +260,10 @@ Currently, the only "required" label is the revision label. This is fairly limit
 Here are some recommended labels that would allow you to take advantage of multiple environments.
 1. `config.example.com/envioronment.1=<environment>`: This would be prod/nonprod/sbx or any other custom environment
 2. `config.example.com/datacenter.2=<datacenter>`: This would be nj/mtc or custom
-3. `config.example.com/<type>.<priority>=<value>`: Dynamically generated label - ***OPTIONAL***
+3. `config.example.com/platform.3=<platform>`: aws/vmware/baremetal. Node elements (`infra-nodes`,
+   `storage-nodes`) build MachineSets differently per platform, so this selects
+   `values/platforms/<platform>.yaml`, which flips the matching toggles.
+4. `config.example.com/<type>.<priority>=<value>`: Dynamically generated label - ***OPTIONAL***
 
 ### Missing Values Files
 

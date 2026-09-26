@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// PinningCheck (POLICY060) flags policy-library version drift across
-// elements. A repo-phase check — runs once with all elements available.
+// PinningCheck (POLICY060) warns when elements depend on different
+// policy-library versions.
 type PinningCheck struct{}
 
-func (PinningCheck) ID() string  { return "POLICY060" }
+func (PinningCheck) ID() string   { return "POLICY060" }
 func (PinningCheck) Phase() Phase { return PhaseRepo }
 
 func (c *PinningCheck) Run(ctx Context) []Finding {

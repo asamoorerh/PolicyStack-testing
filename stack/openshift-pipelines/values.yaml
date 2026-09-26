@@ -23,7 +23,7 @@ stack:
         severity: medium
         disabled: false
 
-    # @description: OperatorPolicy installing the Pipelines subscription in the cluster-wide openshift-operators namespace
+    # @description: OperatorPolicy installing Pipelines cluster-wide in openshift-operators
     operatorPolicies:
       - name: openshift-pipelines
         enabled: true

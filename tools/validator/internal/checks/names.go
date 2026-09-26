@@ -13,8 +13,8 @@ import (
 const MaxPolicyNameLen = 63
 
 // NameLengthCheck (POLICY001) enforces the 63-char limit on every name
-// the policy-library chart produces. Formulas verified against the chart
-// templates in PolicyStack-chart `_policies.tpl` / `_policy-sets.tpl`:
+// policy-library produces. Formulas from PolicyStack-chart `_policies.tpl`
+// and `_policy-sets.tpl`:
 //
 //	Policy.metadata.name        = <value-name>-<release-name>
 //	Policy (replicated by ACM)  = <ns>.<value-name>-<release-name>   <-- bound
@@ -24,15 +24,14 @@ const MaxPolicyNameLen = 63
 //	OperatorPolicy/
 //	CertificatePolicy           = <parent-value-name>-<sub-value-name>  <-- bound
 //
-// Sub-policies are embedded objectDefinitions inside the parent Policy spec;
-// they do NOT carry the namespace prefix or Release.Name. The 63-char rule
-// is the k8s DNS-1123 label limit which ACM enforces on the propagated
-// (replicated) policy name on each managed cluster.
+// Sub-policies are objectDefinitions embedded in the parent Policy spec and
+// carry neither the namespace prefix nor Release.Name. ACM enforces the
+// DNS-1123 label limit on the replicated policy name on each managed cluster.
 //
-// release-name = <chart-name>-<cluster> (set by appset.yaml:26).
+// release-name = <chart-name>-<cluster>, set by appset.yaml.
 type NameLengthCheck struct{}
 
-func (NameLengthCheck) ID() string  { return "POLICY001" }
+func (NameLengthCheck) ID() string   { return "POLICY001" }
 func (NameLengthCheck) Phase() Phase { return PhaseCluster }
 
 func (c *NameLengthCheck) Run(ctx Context) []Finding {
@@ -117,11 +116,12 @@ func (c *NameLengthCheck) Run(ctx Context) []Finding {
 	return out
 }
 
-// DuplicateNameCheck (POLICY002) catches two policies (across all elements
-// in the same policyNamespace) that would render to the same metadata.name.
+// DuplicateNameCheck (POLICY002) reports entries within one element that render to the same
+// metadata.name. Cross-element collisions are reported by run.Run (parent policies, POLICY002) and
+// by POLICY003 (sub-policy templates).
 type DuplicateNameCheck struct{}
 
-func (DuplicateNameCheck) ID() string { return "POLICY002" }
+func (DuplicateNameCheck) ID() string   { return "POLICY002" }
 func (DuplicateNameCheck) Phase() Phase { return PhaseCluster }
 
 func (c *DuplicateNameCheck) Run(ctx Context) []Finding {
@@ -178,8 +178,5 @@ func (c *DuplicateNameCheck) Run(ctx Context) []Finding {
 	return out
 }
 
-// elementsByCluster returns nothing here — POLICY002 cross-element collision
-// detection is performed at the runner level since it needs a global view.
-// We keep the per-element pass above for fast, deterministic intra-element
-// duplicate detection.
+// Cross-element POLICY002 needs every element and runs in run.Run.
 var _ = chart.Element{}

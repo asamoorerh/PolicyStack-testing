@@ -2,14 +2,24 @@
 
 > Node Feature Discovery Operator and instance for hardware feature labelling
 
-*Generated: 2026-05-08 20:16:05*
+*Generated: 2026-09-25 21:46:19*
 
 ## Component Configuration
 
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
 | Component | `nodeFeatureDiscovery` | Node Feature Discovery Operator and instance for hardware feature labelling |
-| Enabled | `False` | Whether this component is enabled |
+| Enabled | `False` | Master control to enable/disable all policies in this element |
+
+## Default Policy Metadata
+
+Default policy metadata applied unless overridden per-policy
+
+| Type | Values | Description |
+| ---- | ------ | ----------- |
+| Categories | CM Configuration Management | Default category classifications |
+| Controls | CM-2 Baseline Configuration | Default control mappings |
+| Standards | NIST SP 800-53 | Default compliance standards |
 
 ## Policies
 
@@ -23,6 +33,13 @@
 | Enabled | `True` | Whether this policy is templated |
 | Severity | `medium` | Policy severity level |
 | Remediation | `enforce` | Action when policy is violated |
+
+#### Compliance Metadata
+| Type | Values | Description |
+| ---- | ------ | ----------- |
+| Categories | CM Configuration Management (default) | Category classifications |
+| Controls | CM-2 Baseline Configuration (default) | Control mappings |
+| Standards | NIST SP 800-53 (default) | Compliance standards |
 
 #### Associated Sub-Policies
 
@@ -60,6 +77,11 @@
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |
 
+**Gating:**
+
+- Waits for operator `node-feature-discovery` to reach CSV phase `Succeeded`
+- Reports compliant while waiting (`ignorePending`)
+
 **Templates:**
 | Template File | Compliance Type | Description |
 | ------------- | --------------- | ----------- |
@@ -80,7 +102,7 @@
 | --------- | ----- | ----------- |
 | Name | `nfd-install-node-feature-discovery` | Operator policy identifier |
 | Namespace | `openshift-nfd` | Target namespace for operator |
-| Display Name | `Node Feature Discovery` | Display name for operator |
+| Display Name | `Node Feature Discovery Operator` | Display name for operator |
 | Compliance Type | `musthave` | Compliance requirement |
 | Remediation | `enforce` | Remediation action |
 | Severity | `medium` | Severity level |

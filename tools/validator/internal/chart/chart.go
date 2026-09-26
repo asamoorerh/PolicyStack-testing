@@ -1,7 +1,6 @@
-// Package chart discovers element charts under stack/ and parses each one
-// into a strongly-typed Element. Source values.yaml is parsed twice: once
-// as a typed struct (for check logic) and once as a yaml.v3 Node tree (for
-// source-line-accurate findings).
+// Package chart discovers element charts under stack/ and loads each into an
+// Element. values.yaml is parsed into a yaml.v3 Node tree, which keeps source
+// positions for findings, and the typed Component is decoded from that tree.
 package chart
 
 import (
@@ -16,7 +15,7 @@ import (
 
 // Element is a single chart under stack/<name>/ or the sample-element/.
 type Element struct {
-	// Name from Chart.yaml — kebab-case, used as Helm Release.Name suffix.
+	// Name from Chart.yaml (kebab-case). Prefix of the helm Release.Name.
 	ChartName string
 	// Absolute filesystem path of the element directory.
 	Dir string
@@ -26,11 +25,11 @@ type Element struct {
 	ConvertersDir string
 	// Dependencies as declared in Chart.yaml.
 	Dependencies []Dependency
-	// Parsed values (typed; only the keys we care about).
+	// Typed values; only the keys the checks inspect.
 	Values *Values
-	// yaml.v3 root node for values.yaml — preserves line/column for findings.
+	// yaml.v3 root node for values.yaml, used for finding line/column.
 	ValuesDoc *yaml.Node
-	// Top-level key under `stack:` — may be empty if values.yaml has no stack.
+	// Key under `stack:`. Empty when values.yaml has no stack block.
 	StackKey string
 }
 
@@ -48,67 +47,163 @@ type chartYaml struct {
 	Dependencies []Dependency `yaml:"dependencies"`
 }
 
-// Values is the typed view of `stack.<key>` plus root-level fields we need.
-// We only model the fields the validator inspects; helm sees the full map.
+// Values is the typed view of `stack.<key>` plus the root-level fields the
+// validator needs. Only fields the checks inspect are modelled.
 type Values struct {
-	PolicyNamespace string             // from root values.yaml (not per element)
-	Component       *Component         // values.stack[stackKey]
+	PolicyNamespace string     // from root values.yaml (not per element)
+	Component       *Component // values.stack[stackKey]
 }
 
 // Component mirrors the per-element block under `stack.<key>`.
+//
+// policy-library reads `enabled` and `default`. The legacy `enable` and `defaultPolicy` spellings
+// are modelled separately so DeadKeyCheck can report them; an element using them renders wrong
+// without any error.
 type Component struct {
-	Enable              bool                 `yaml:"enable"`
-	Policies            []Policy             `yaml:"policies"`
-	ConfigPolicies      []SubPolicy          `yaml:"configPolicies"`
-	OperatorPolicies    []OperatorPolicy     `yaml:"operatorPolicies"`
-	CertificatePolicies []CertificatePolicy  `yaml:"certificatePolicies"`
-	PolicySets          []PolicySet          `yaml:"policySets"`
-	DefaultPolicy       *DefaultPolicy       `yaml:"defaultPolicy"`
+	Enabled             bool                `yaml:"enabled"`
+	Policies            []Policy            `yaml:"policies"`
+	ConfigPolicies      []SubPolicy         `yaml:"configPolicies"`
+	OperatorPolicies    []OperatorPolicy    `yaml:"operatorPolicies"`
+	CertificatePolicies []CertificatePolicy `yaml:"certificatePolicies"`
+	PolicySets          []PolicySet         `yaml:"policySets"`
+	Default             *Default            `yaml:"default"`
+	// Toggles overrides an entry's Enabled by name (chart 1.3.0).
+	Toggles        map[string]bool `yaml:"toggles"`
+	OrderPolicies  bool            `yaml:"orderPolicies"`
+	OrderManifests bool            `yaml:"orderManifests"`
+
+	// Legacy spellings the chart never reads, modelled only so they can be reported.
+	LegacyEnable        *bool    `yaml:"enable"`
+	LegacyDefaultPolicy *Default `yaml:"defaultPolicy"`
 }
 
-// DefaultPolicy is the per-component defaults block. Enums also validated here.
-type DefaultPolicy struct {
+// Default is the per-component defaults block. policy-library reads only
+// categories/controls/standards from it; Severity, RemediationAction and Disabled are modelled so
+// DeadKeyCheck can report that they have no effect here.
+type Default struct {
 	Severity          string `yaml:"severity"`
 	RemediationAction string `yaml:"remediationAction"`
+	Disabled          *bool  `yaml:"disabled"`
+}
+
+// CouldBeEnabled reports whether an entry is enabled, or is governed by a toggle and so may be
+// enabled on some cluster. Structural checks use this instead of IsEnabled so that references inside
+// a sub-feature that is off by default are still validated before a cluster turns it on.
+func (c *Component) CouldBeEnabled(name string, declared bool) bool {
+	if c != nil {
+		if _, ok := c.Toggles[name]; ok {
+			return true
+		}
+	}
+	return c.IsEnabled(name, declared)
+}
+
+// IsToggled reports whether an entry's enablement is governed by the toggles map.
+func (c *Component) IsToggled(name string) bool {
+	if c == nil {
+		return false
+	}
+	_, ok := c.Toggles[name]
+	return ok
+}
+
+// IsEnabled returns an entry's effective enabled state. A toggle keyed by the entry's name
+// overrides its declared `enabled` in either direction.
+func (c *Component) IsEnabled(name string, declared bool) bool {
+	if c == nil {
+		return declared
+	}
+	if v, ok := c.Toggles[name]; ok {
+		return v
+	}
+	return declared
 }
 
 // Policy is a parent ACM Policy entry.
 type Policy struct {
-	Name              string `yaml:"name"`
-	Enabled           bool   `yaml:"enabled"`
-	Severity          string `yaml:"severity"`
-	RemediationAction string `yaml:"remediationAction"`
+	Name              string     `yaml:"name"`
+	Enabled           bool       `yaml:"enabled"`
+	Severity          string     `yaml:"severity"`
+	RemediationAction string     `yaml:"remediationAction"`
+	Dependencies      []DepEntry `yaml:"dependencies"`
+}
+
+// DepEntry is one entry of policies[].dependencies or *.extraDependencies.
+type DepEntry struct {
+	Name       string `yaml:"name"`
+	Kind       string `yaml:"kind"`
+	APIVersion string `yaml:"apiVersion"`
+	Namespace  string `yaml:"namespace"`
+	Compliance string `yaml:"compliance"`
+	PolicyRef  string `yaml:"policyRef"`
+	// Release pins an exact Helm release; Element names a sibling element on the same cluster.
+	Release string `yaml:"release"`
+	Element string `yaml:"element"`
+	Raw     bool   `yaml:"raw"`
 }
 
 // SubPolicy is the union shape used by configPolicies (ConfigurationPolicy).
 type SubPolicy struct {
-	Name              string         `yaml:"name"`
-	Enabled           bool           `yaml:"enabled"`
-	PolicyRef         string         `yaml:"policyRef"`
-	Severity          string         `yaml:"severity"`
-	RemediationAction string         `yaml:"remediationAction"`
-	ComplianceType    string         `yaml:"complianceType"`
-	TemplateNames     []TemplateName `yaml:"templateNames"`
+	Name              string          `yaml:"name"`
+	Enabled           bool            `yaml:"enabled"`
+	PolicyRef         string          `yaml:"policyRef"`
+	Severity          string          `yaml:"severity"`
+	RemediationAction string          `yaml:"remediationAction"`
+	ComplianceType    string          `yaml:"complianceType"`
+	TemplateNames     []TemplateName  `yaml:"templateNames"`
+	ExtraDependencies []DepEntry      `yaml:"extraDependencies"`
+	WaitForOperator   WaitForOperator `yaml:"waitForOperator"`
+	IgnorePending     bool            `yaml:"ignorePending"`
+	RawTemplate       bool            `yaml:"rawTemplate"`
 }
 
 // OperatorPolicy mirrors operatorPolicies entries.
 type OperatorPolicy struct {
-	Name              string `yaml:"name"`
-	Enabled           bool   `yaml:"enabled"`
-	PolicyRef         string `yaml:"policyRef"`
-	Severity          string `yaml:"severity"`
-	RemediationAction string `yaml:"remediationAction"`
-	ComplianceType    string `yaml:"complianceType"`
-	UpgradeApproval   string `yaml:"upgradeApproval"`
+	Name              string          `yaml:"name"`
+	Enabled           bool            `yaml:"enabled"`
+	PolicyRef         string          `yaml:"policyRef"`
+	Severity          string          `yaml:"severity"`
+	RemediationAction string          `yaml:"remediationAction"`
+	ComplianceType    string          `yaml:"complianceType"`
+	UpgradeApproval   string          `yaml:"upgradeApproval"`
+	ExtraDependencies []DepEntry      `yaml:"extraDependencies"`
+	WaitForOperator   WaitForOperator `yaml:"waitForOperator"`
+	IgnorePending     bool            `yaml:"ignorePending"`
 }
 
 // CertificatePolicy mirrors certificatePolicies entries.
 type CertificatePolicy struct {
-	Name              string `yaml:"name"`
-	Enabled           bool   `yaml:"enabled"`
-	PolicyRef         string `yaml:"policyRef"`
-	Severity          string `yaml:"severity"`
-	RemediationAction string `yaml:"remediationAction"`
+	Name              string          `yaml:"name"`
+	Enabled           bool            `yaml:"enabled"`
+	PolicyRef         string          `yaml:"policyRef"`
+	Severity          string          `yaml:"severity"`
+	RemediationAction string          `yaml:"remediationAction"`
+	ExtraDependencies []DepEntry      `yaml:"extraDependencies"`
+	WaitForOperator   WaitForOperator `yaml:"waitForOperator"`
+	IgnorePending     bool            `yaml:"ignorePending"`
+}
+
+// WaitForOperator accepts either a single operator name or a list of them.
+type WaitForOperator []string
+
+// UnmarshalYAML coerces a bare scalar into a one-element list.
+func (w *WaitForOperator) UnmarshalYAML(n *yaml.Node) error {
+	switch n.Kind {
+	case yaml.ScalarNode:
+		if n.Value != "" {
+			*w = WaitForOperator{n.Value}
+		}
+		return nil
+	case yaml.SequenceNode:
+		var items []string
+		if err := n.Decode(&items); err != nil {
+			return err
+		}
+		*w = items
+		return nil
+	default:
+		return fmt.Errorf("waitForOperator: unexpected yaml kind %d at line %d", n.Kind, n.Line)
+	}
 }
 
 // PolicySet groups policies into a PolicySet ACM resource.
@@ -118,8 +213,8 @@ type PolicySet struct {
 	Policies []string `yaml:"policies"`
 }
 
-// TemplateName supports the bare-string OR mapping form documented in
-// chart-readme.md ("templateNames: [foo]" or "templateNames: [{name: foo}]").
+// TemplateName accepts both forms documented in chart-readme.md:
+// "templateNames: [foo]" and "templateNames: [{name: foo}]".
 type TemplateName struct {
 	Name string `yaml:"name"`
 }
@@ -137,8 +232,8 @@ func (t *TemplateName) UnmarshalYAML(n *yaml.Node) error {
 	return fmt.Errorf("templateNames entry: unexpected yaml kind %d at line %d", n.Kind, n.Line)
 }
 
-// LoadAll discovers element charts under stackDir + sampleDir (if present)
-// and the root policyNamespace from rootValuesFile.
+// LoadAll loads every element chart under stackDir, plus sampleDir when it
+// contains a Chart.yaml, and returns policyNamespace from rootValuesFile.
 func LoadAll(stackDir, sampleDir, rootValuesFile string) ([]*Element, string, error) {
 	ns, err := loadPolicyNamespace(rootValuesFile)
 	if err != nil {
@@ -232,7 +327,7 @@ func decodeComponent(doc *yaml.Node) (string, *Component, error) {
 	if len(stackNode.Content) < 2 {
 		return "", nil, nil
 	}
-	// Take the first key under stack: — convention is one element per chart.
+	// One element per chart, so the first key under stack: is the element.
 	keyNode := stackNode.Content[0]
 	valueNode := stackNode.Content[1]
 	var c Component
@@ -268,8 +363,8 @@ func loadPolicyNamespace(path string) (string, error) {
 	return v.PolicyNamespace, nil
 }
 
-// CamelFromKebab converts a kebab-case chart name to the camelCase form used
-// as the key under `stack:` (per chart-readme.md). Matches tools/create-element.sh.
+// CamelFromKebab converts a kebab-case chart name to the camelCase key used
+// under `stack:` (see chart-readme.md). Matches tools/create-element.sh.
 func CamelFromKebab(s string) string {
 	parts := strings.Split(s, "-")
 	if len(parts) == 0 {

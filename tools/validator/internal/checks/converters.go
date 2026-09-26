@@ -15,7 +15,7 @@ import (
 // has no matching converters/<name>.yaml on disk.
 type MissingConverterCheck struct{}
 
-func (MissingConverterCheck) ID() string  { return "POLICY020" }
+func (MissingConverterCheck) ID() string   { return "POLICY020" }
 func (MissingConverterCheck) Phase() Phase { return PhaseChart }
 
 func (c *MissingConverterCheck) Run(ctx Context) []Finding {
@@ -54,12 +54,11 @@ func (c *MissingConverterCheck) Run(ctx Context) []Finding {
 	return out
 }
 
-// UnusedConverterCheck (POLICY021) warns when a converter file is on disk
-// but no templateNames[].name references it. Warning only — dead files are
-// noise, not breakage.
+// UnusedConverterCheck (POLICY021) warns when no templateNames[].name
+// references a converter file. Unused files do not break rendering.
 type UnusedConverterCheck struct{}
 
-func (UnusedConverterCheck) ID() string  { return "POLICY021" }
+func (UnusedConverterCheck) ID() string   { return "POLICY021" }
 func (UnusedConverterCheck) Phase() Phase { return PhaseChart }
 
 func (c *UnusedConverterCheck) Run(ctx Context) []Finding {

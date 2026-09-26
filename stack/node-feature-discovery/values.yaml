@@ -13,7 +13,7 @@ stack:
       standards:
         - NIST SP 800-53
 
-    # @description: Parent policy grouping the NFD operator install AND the NodeFeatureDiscovery instance
+    # @description: Parent policy grouping the NFD operator install and the NodeFeatureDiscovery instance
     policies:
       - name: nfd-install
         enabled: true
@@ -28,7 +28,7 @@ stack:
       - name: node-feature-discovery
         enabled: true
         description: "Node Feature Discovery Operator"
-        displayName: "Node Feature Discovery"
+        displayName: "Node Feature Discovery Operator"
         policyRef: nfd-install
         severity: medium
         remediationAction: enforce
@@ -65,6 +65,10 @@ stack:
 
       - name: nfd-instance
         enabled: true
+        # @desc: Wait for the operator's CSV to reach Succeeded; the CRD only exists after install
+        waitForOperator: node-feature-discovery
+        # @desc: Report compliant while waiting; avoids flapping NonCompliant during install
+        ignorePending: true
         description: "Deploy the NodeFeatureDiscovery custom resource"
         policyRef: nfd-install
         complianceType: musthave

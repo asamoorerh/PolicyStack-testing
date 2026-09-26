@@ -94,8 +94,7 @@ stack:
 	if len(got) == 0 {
 		t.Fatalf("expected at least one finding, got 0")
 	}
-	// Parent policy shouldn't be flagged (its ACM-replicated form is < 63 here),
-	// only the sub-policy should be — verify via message content.
+	// Expect a sub-policy finding; the parent's replicated name is under 63.
 	subFound := false
 	for _, f := range got {
 		if strings.Contains(f.Message, "ConfigurationPolicy") && !strings.Contains(f.Message, "ACM-replicated") {

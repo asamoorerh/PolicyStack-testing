@@ -1,6 +1,6 @@
 module github.com/PolicyStack/PolicyStack/tools/validator
 
-go 1.22
+go 1.26
 
 require (
 	gopkg.in/yaml.v3 v3.0.1

@@ -4,8 +4,14 @@ on:
   pull_request:
     paths:
       - 'stack/**'
-      - 'sample-element/**'
-      - 'appset/**'
+      - 'values/**'
+      - 'values.yaml'
+      - 'tools/validator/**'
+      - '.github/workflows/validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'stack/**'
       - 'values/**'
       - 'values.yaml'
       - 'tools/validator/**'
@@ -14,35 +20,42 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep on the Helm major that the hub's Argo CD renders with. Argo CD 3.4 and earlier bundle Helm 3.
+  HELM_VERSION: v3.22.0
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          go-version: '1.22'
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: tools/validator/go.mod
           cache-dependency-path: tools/validator/go.sum
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v3.14.4
+          version: ${{ env.HELM_VERSION }}
 
-      - name: Install kubeconform
-        run: |
-          curl -sSL -o /tmp/kc.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
-          sudo tar -xzf /tmp/kc.tar.gz -C /usr/local/bin kubeconform
+      - name: Vet, test and build validator
+        run: make -C tools/validator lint test build
 
-      - name: Build validator
-        working-directory: tools/validator
-        run: go build -trimpath -o bin/policystack-validator ./cmd/policystack-validator
-
+      # POLICY080 is skipped: the chart only emits Policy, PlacementBinding and PlacementRule, which
+      # kubeconform has no schemas for, so it would validate nothing.
       - name: Validate policies
         run: |
-          ./tools/validator/bin/policystack-validator \
+          tools/validator/bin/policystack-validator \
             --github \
             --repo-root . \
-            --extra-values tools/validator/testdata/baseline.yaml
+            --extra-values tools/validator/testdata/baseline.yaml \
+            --skip POLICY080

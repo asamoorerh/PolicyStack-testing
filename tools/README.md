@@ -92,7 +92,7 @@ This transformation ensures proper helm value referencing in the PolicyStack str
 #### File Modifications
 
 1. **Chart.yaml**: Updates name and description fields
-2. **values.yaml**: Replaces all instances of `replaceMe` with the camelCase name
+2. **values.yaml**: Replaces the sample's stack key (the camelCase form of its chart name, `myTest`) with the new camelCase name
 3. **Directory Structure**: Preserves the complete template structure including:
    - `templates/` directory with policy.yaml
    - `converters/` directory for manifest templates
@@ -142,6 +142,9 @@ DocumentationGenerator
 ### Usage
 
 ```bash
+# Install the pinned dependencies
+pip install -r tools/requirements.txt
+
 # Generate documentation for all elements
 python tools/doc-generator.py
 
@@ -193,6 +196,18 @@ versions:
   - v1.1.0
 ```
 
+#### Multi-line Annotations
+
+Consecutive annotation lines are joined into one description. A blank line or plain comment ends the run.
+
+```yaml
+# @desc: Allow OSDs to be unevenly distributed. Set true on bare metal when the storage node
+# @desc: count is not a multiple of three.
+flexibleScaling: null
+```
+
+Parser tests: `python -m unittest tools/test_doc_generator.py`
+
 ### Output Format
 
 The generator produces:
@@ -235,31 +250,9 @@ Lists all documented elements with links and provides comment notation guide.
 
 ## CI/CD Integration
 
-The repository includes GitHub Actions workflows for documentation automation:
-
-### docs-check.yml
-
-Validates documentation is up-to-date on pull requests:
-
-```yaml
-- Runs on PR when stack/values files change
-- Executes doc-generator.py
-- Compares output (ignoring timestamp changes)
-- Fails check if documentation needs updating
-- Posts status comment with update instructions
-```
-
-### docs-update.yml
-
-Auto-updates documentation when `update-docs` label is added:
-
-```yaml
-- Triggered by label addition
-- Runs documentation generator
-- Commits changes back to PR
-- Removes label after completion
-- Updates PR comment with status
-```
+`docs-check.yml` runs the generator tests and `doc-generator.py --check` on pull requests, failing
+when `docs/` is stale. Adding the `update-docs` label runs `docs-update.yml`, which regenerates and
+commits `docs/` to the PR branch. See [docs/workflows.md](../docs/workflows.md).
 
 ## Best Practices
 

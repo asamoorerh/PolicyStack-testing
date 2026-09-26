@@ -15,12 +15,11 @@ var (
 	allowedUpgrade    = []string{"Automatic", "Manual", "None"}
 )
 
-// EnumCheck (POLICY030) validates the small set of enum-shaped fields ACM
-// rejects when wrong: severity, remediationAction, complianceType,
-// upgradeApproval. Catches typos before they reach a hub.
+// EnumCheck (POLICY030) validates the enum fields ACM rejects when invalid:
+// severity, remediationAction, complianceType and upgradeApproval.
 type EnumCheck struct{}
 
-func (EnumCheck) ID() string  { return "POLICY030" }
+func (EnumCheck) ID() string   { return "POLICY030" }
 func (EnumCheck) Phase() Phase { return PhaseChart }
 
 func (c *EnumCheck) Run(ctx Context) []Finding {
@@ -46,9 +45,10 @@ func (c *EnumCheck) Run(ctx Context) []Finding {
 		})
 	}
 
-	if comp.DefaultPolicy != nil {
-		emit("defaultPolicy.severity", comp.DefaultPolicy.Severity, allowedSeverity, "defaultPolicy", "severity")
-		emit("defaultPolicy.remediationAction", comp.DefaultPolicy.RemediationAction, allowedRemed, "defaultPolicy", "remediationAction")
+	// policy-library reads `default`, not `defaultPolicy`; POLICY031 reports the legacy spelling.
+	if comp.Default != nil {
+		emit("default.severity", comp.Default.Severity, allowedSeverity, "default", "severity")
+		emit("default.remediationAction", comp.Default.RemediationAction, allowedRemed, "default", "remediationAction")
 	}
 	for i, p := range comp.Policies {
 		emit("policies["+strconv.Itoa(i)+"].severity", p.Severity, allowedSeverity, "policies", strconv.Itoa(i), "severity")

@@ -1,6 +1,5 @@
-// Package checks defines the Check interface and the rule registry. Each
-// rule lives in its own file in this package so the test surface stays
-// small and the registry stays the single source of truth for rule IDs.
+// Package checks defines the Check interface and the rule registry. Each rule
+// is in its own file; All is the authoritative list of rule IDs.
 package checks
 
 import (
@@ -33,9 +32,9 @@ type Phase int
 const (
 	// PhaseChart runs once per element (no cluster/render context).
 	PhaseChart Phase = iota
-	// PhaseCluster runs once per (element, fixture) and may consume rendered manifests.
+	// PhaseCluster runs once per (element, fixture) with the rendered manifests.
 	PhaseCluster
-	// PhaseRepo runs once across all elements (e.g. dependency-pinning consistency).
+	// PhaseRepo runs once with every element loaded (e.g. dependency pinning).
 	PhaseRepo
 )
 
@@ -51,15 +50,14 @@ type Finding struct {
 	Col      int
 }
 
-// Context is what each check receives.
+// Context is the input to Check.Run.
 type Context struct {
 	Element  *chart.Element
 	Cluster  *cascade.Resolved
 	Rendered []byte // helm template stdout, only populated for PhaseCluster
-	// AllElements is set for PhaseRepo so checks can reason globally.
+	// AllElements is set for PhaseRepo only.
 	AllElements []*chart.Element
-	// AllRendered is the per-cluster rendered output keyed by element+cluster.
-	// Used by POLICY002 cross-element duplicate detection.
+	// AllRendered is not populated. Cross-element POLICY002 runs in run.Run.
 	AllRendered map[string][]byte
 	Logger      *slog.Logger
 }
@@ -74,18 +72,21 @@ type Check interface {
 // All returns the registered checks in stable order.
 func All() []Check {
 	return []Check{
-		&NameLengthCheck{},     // POLICY001
-		&DuplicateNameCheck{},  // POLICY002
-		&PolicyRefCheck{},      // POLICY010
+		&NameLengthCheck{},       // POLICY001
+		&DuplicateNameCheck{},    // POLICY002
+		&SubPolicyNameCheck{},    // POLICY003
+		&PolicyRefCheck{},        // POLICY010
+		&DependencyCheck{},       // POLICY011
 		&MissingConverterCheck{}, // POLICY020
 		&UnusedConverterCheck{},  // POLICY021
-		&EnumCheck{},           // POLICY030
-		&PolicySetCheck{},      // POLICY040
-		&LabelCheck{},          // POLICY050
-		&PinningCheck{},        // POLICY060
-		&LintCheck{},           // POLICY070 (set HelmBin via runtime)
-		&KubeconformCheck{},    // POLICY080 (set Bin/SchemasDir via runtime)
-		&CamelCaseCheck{},      // POLICY090
-		&RenderCheck{},         // RENDER000
+		&EnumCheck{},             // POLICY030
+		&DeadKeyCheck{},          // POLICY031
+		&PolicySetCheck{},        // POLICY040
+		&LabelCheck{},            // POLICY050
+		&PinningCheck{},          // POLICY060
+		&LintCheck{},             // POLICY070 (Runner set by run.buildRegistry)
+		&KubeconformCheck{},      // POLICY080 (Bin, SchemasDir set by run.buildRegistry)
+		&CamelCaseCheck{},        // POLICY090
+		&RenderCheck{},           // RENDER000
 	}
 }

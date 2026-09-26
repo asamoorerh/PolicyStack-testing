@@ -1,7 +1,7 @@
-// policystack-validator runs CI-friendly checks over PolicyStack ACM-policy
-// charts: renders each element under stack/ for every fixture cluster, walks
-// the values cascade exactly like appset.yaml does at runtime, and emits
-// findings as pretty terminal output or GitHub Actions annotations.
+// policystack-validator checks the PolicyStack element charts. It resolves the
+// values cascade the same way appset.yaml does, renders each element under
+// stack/ for every fixture cluster, and reports findings as terminal output or
+// GitHub Actions annotations.
 package main
 
 import (
@@ -28,23 +28,23 @@ func main() {
 
 func realMain() error {
 	var (
-		repoRoot       = flag.String("repo-root", ".", "path to repo root")
-		stackDir       = flag.String("stack-dir", "", "override stack/ (default <repo>/stack)")
-		sampleDir      = flag.String("sample-dir", "", "override sample-element/ (default <repo>/sample-element)")
-		valuesDir      = flag.String("values-dir", "", "override values/ (default <repo>/values)")
-		fixturesDir    = flag.String("fixtures-dir", "", "fixture ManagedCluster YAMLs (default <repo>/tools/validator/testdata/clusters)")
-		baseDomain     = flag.String("base-domain", "example.com", "config label prefix")
-		github         = flag.Bool("github", false, "emit GitHub Actions ::error/::warning annotations")
-		severity       = flag.String("severity", "error", "fail threshold: error|warning")
-		skipFlag       = flag.String("skip", "", "comma-separated rule IDs to skip")
-		onlyFlag       = flag.String("only", "", "comma-separated rule IDs to run exclusively")
-		jobs           = flag.Int("jobs", 0, "parallel render workers (default NumCPU)")
-		helmBin        = flag.String("helm-bin", "helm", "helm binary")
-		kcBin          = flag.String("kubeconform-bin", "kubeconform", "kubeconform binary; POLICY080 is skipped if not on PATH")
-		schemasDir     = flag.String("schemas-dir", "", "extra -schema-location for kubeconform")
-		includeSample  = flag.Bool("include-sample-element", false, "validate sample-element/ alongside stack/")
-		extraValues    = flag.String("extra-values", "", "comma-separated values files appended (highest precedence) to every cascade — useful for supplying baseline `selector` etc.")
-		verbose        = flag.Bool("v", false, "verbose logging")
+		repoRoot      = flag.String("repo-root", ".", "path to repo root")
+		stackDir      = flag.String("stack-dir", "", "override stack/ (default <repo>/stack)")
+		sampleDir     = flag.String("sample-dir", "", "override sample-element/ (default <repo>/sample-element)")
+		valuesDir     = flag.String("values-dir", "", "override values/ (default <repo>/values)")
+		fixturesDir   = flag.String("fixtures-dir", "", "fixture ManagedCluster YAMLs (default <repo>/tools/validator/testdata/clusters)")
+		baseDomain    = flag.String("base-domain", "example.com", "config label prefix")
+		github        = flag.Bool("github", false, "emit GitHub Actions ::error/::warning annotations")
+		severity      = flag.String("severity", "error", "fail threshold: error|warning")
+		skipFlag      = flag.String("skip", "", "comma-separated rule IDs to skip")
+		onlyFlag      = flag.String("only", "", "comma-separated rule IDs to run exclusively")
+		jobs          = flag.Int("jobs", 0, "parallel render workers (default NumCPU)")
+		helmBin       = flag.String("helm-bin", "helm", "helm binary")
+		kcBin         = flag.String("kubeconform-bin", "kubeconform", "kubeconform binary; POLICY080 is skipped if not on PATH")
+		schemasDir    = flag.String("schemas-dir", "", "extra -schema-location for kubeconform")
+		includeSample = flag.Bool("include-sample-element", false, "validate sample-element/ alongside stack/")
+		extraValues   = flag.String("extra-values", "", "comma-separated values files appended (highest precedence) to every cascade — useful for supplying baseline `selector` etc.")
+		verbose       = flag.Bool("v", false, "verbose logging")
 	)
 	flag.Parse()
 
@@ -77,7 +77,7 @@ func realMain() error {
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 
-	// kubeconform is optional — strip from opts if not on PATH.
+	// kubeconform is optional; POLICY080 is skipped when it is not on PATH.
 	resolvedKc := *kcBin
 	if resolvedKc != "" {
 		if _, err := exec.LookPath(resolvedKc); err != nil {

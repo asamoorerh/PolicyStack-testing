@@ -1,8 +1,6 @@
-// Package render shells out to `helm` to materialize an element chart for a
-// given resolved values cascade. It does NOT re-implement helm's merge or
-// template logic — passing -f files in cascade order matches what
-// ApplicationSet does at runtime, so any rendering divergence is a helm bug
-// rather than ours.
+// Package render runs `helm` to render an element chart for a resolved values
+// cascade. Values merging and templating are left to helm: files are passed
+// with -f in cascade order, as the ApplicationSet does.
 package render
 
 import (
@@ -35,7 +33,8 @@ func New(helmBin string) *Runner {
 }
 
 // EnsureDeps runs `helm dependency update` on elementDir at most once per
-// process. Cached error is returned on subsequent calls.
+// process, and not at all when charts/ already holds a .tgz. Later calls
+// return the first call's error.
 func (r *Runner) EnsureDeps(ctx context.Context, elementDir string) error {
 	v, _ := r.depOnce.LoadOrStore(elementDir, &sync.Once{})
 	once := v.(*sync.Once)
@@ -63,11 +62,11 @@ func alreadyDownloaded(elementDir string) bool {
 
 // TemplateResult is the captured output of a helm template invocation.
 type TemplateResult struct {
-	Stdout    []byte
-	Err       error  // non-nil if helm exited non-zero or the command failed to start
-	Stderr    string // helm's stderr, trimmed
-	ErrFile   string // file extracted from "Error: ... in \"<file>\" line N"
-	ErrLine   int
+	Stdout  []byte
+	Err     error  // non-nil if helm exited non-zero or the command failed to start
+	Stderr  string // helm's stderr, trimmed
+	ErrFile string // file extracted from "Error: ... in \"<file>\" line N"
+	ErrLine int
 }
 
 // Template runs `helm template <release> <element> -f <values...>`.
@@ -120,7 +119,7 @@ func HelmAvailable(helmBin string) error {
 	return nil
 }
 
-// FileExists is a convenience for callers building cascades.
+// FileExists reports whether p exists.
 func FileExists(p string) bool {
 	_, err := os.Stat(p)
 	return err == nil
