@@ -1,5 +1,8 @@
 # PolicyStack
 PolicyStack is a GitOps implementation utilizing ACM (Advanced Cluster Management) policies to propagate configuration. The purpose is to create a "stack" of policies to apply to clusters. It allows for fine-grained configuration changes on various different bases (per-cluster, per-environment, etc). The included helm chart allows for `elements` (defined as a single helm chart inside the stack) in this "policy stack" to be modified at any point (unlike an actual stack, each element can be modified and enabled/disabled at any point). It also allows for rapid development and integration of new configurations due to the simple nature of helm.
+## Architecture
+[docs/architecture.drawio](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net)) shows the repository, the ACM hub (Argo CD, ManagedClusters, Governance) and the managed clusters, with the numbered flow from Git to an enforced policy.
+
 ## Tools
 ### How to create new configuration
 1. Run the `tools/create-element.sh` script. It will accept two user-inputs. First is the name of the element you would like to create. Only alphanumeric characters and dashes (-) are accepted. Second is a description. This will be used for the chart description.
@@ -13,16 +16,6 @@ PolicyStack is a GitOps implementation utilizing ACM (Advanced Cluster Managemen
 
 #### Overview
 PolicyStack includes an automated documentation generator that creates comprehensive markdown documentation from your helm chart values files. This tool parses special comment annotations in `values.yaml` files to generate detailed, human-readable documentation for each element in your policy stack.
-
-#### Why?
-
-Managing complex policy configurations across multiple clusters requires clear documentation, but manually maintaining docs alongside code is error-prone and time-consuming. This generator solves several problems:
-
-1. **Single Source of Truth**: Documentation lives directly in your values files as comments, ensuring it stays synchronized with actual configurations
-2. **Consistency**: Generates uniform documentation structure across all stack elements
-3. **Completeness**: Automatically documents all enabled policies, configurations, operators, and certificates with their relationships
-4. **Validation**: Identifies orphaned sub-policies that reference disabled or non-existent parent policies
-5. **Compliance Tracking**: Clearly shows which security controls, standards, and categories each policy addresses
 
 #### Usage
 
@@ -195,8 +188,8 @@ Values files are loaded in a specific, but dynamic, order, with later files over
 
 ```
 repository/
-├── apps/
-│   └── sample-chart/
+├── stack/
+│   └── cert-manager/
 │       └── values.yaml       # (1) Chart default values
 ├── values.yaml               # (2) Global values
 └── values/
@@ -259,7 +252,7 @@ Currently, the only "required" label is the revision label. This is fairly limit
 ## Recommended Labels
 Here are some recommended labels that would allow you to take advantage of multiple environments.
 1. `config.example.com/envioronment.1=<environment>`: This would be prod/nonprod/sbx or any other custom environment
-2. `config.example.com/datacenter.2=<datacenter>`: This would be nj/mtc or custom
+2. `config.example.com/datacenter.2=<datacenter>`: This would be location or custom. Mainly just to differenciate between ACM clusters in different environments.
 3. `config.example.com/platform.3=<platform>`: aws/vmware/baremetal. Node elements (`infra-nodes`,
    `storage-nodes`) build MachineSets differently per platform, so this selects
    `values/platforms/<platform>.yaml`, which flips the matching toggles.
