@@ -180,11 +180,11 @@ spec:
                   key: {{ $expr.key }}
                   operator: {{ $expr.operator }}
                   values:
-                    - {{ index $expr.values 0 }}
+                    - {{ index $expr.values 0 | quote }}
                 {{- end }}
                 name:
                   key: name
                   operator: In
                   values:
-                    - {{ $clusterName }}
+                    - {{ $clusterName | quote }}
 

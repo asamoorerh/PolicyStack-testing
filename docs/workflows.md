@@ -20,7 +20,7 @@ the run in progress.
    the PR diff at the file and line to fix. Errors fail the job; warnings are annotated only.
 
 Helm is pinned by `HELM_VERSION` in the workflow. Keep it on the major the hub's Argo CD uses.
-POLICY080 is skipped: the chart only emits Policy, PlacementBinding and PlacementRule, which have no
+POLICY080 is skipped: the chart only emits Policy, PlacementBinding and Placement, which have no
 kubeconform schemas.
 
 To reproduce locally, see [Validation](../README.md#validation) in the README.
