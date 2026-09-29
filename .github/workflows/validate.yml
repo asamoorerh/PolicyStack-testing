@@ -50,7 +50,7 @@ jobs:
       - name: Vet, test and build validator
         run: make -C tools/validator lint test build
 
-      # POLICY080 is skipped: the chart only emits Policy, PlacementBinding and PlacementRule, which
+      # POLICY080 is skipped: the chart only emits Policy, PlacementBinding and Placement, which
       # kubeconform has no schemas for, so it would validate nothing.
       - name: Validate policies
         run: |

@@ -23,7 +23,7 @@ func (c *KubeconformCheck) Run(ctx Context) []Finding {
 	if c.Bin == "" || ctx.Rendered == nil || len(ctx.Rendered) == 0 {
 		return nil
 	}
-	args := []string{"-strict", "-summary", "-skip", "Policy,ConfigurationPolicy,OperatorPolicy,CertificatePolicy,PolicySet,PlacementBinding,PlacementRule,Placement"}
+	args := []string{"-strict", "-summary", "-skip", "Policy,ConfigurationPolicy,OperatorPolicy,CertificatePolicy,PolicySet,PlacementBinding,Placement"}
 	if c.SchemasDir != "" {
 		args = append([]string{"-schema-location", c.SchemasDir, "-schema-location", "default"}, args...)
 	}

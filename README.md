@@ -140,6 +140,12 @@ The installation is configured via the `./appset` helm chart.
 2. helm install appset ./appset -f ./appset/values.yaml -f values.yaml
 ```
 
+The appset chart also creates the `policyNamespace` namespace and binds the `global` ManagedClusterSet into it. Each element's Placement lives in that namespace and can only select clusters from cluster sets bound there. Delete any hand-made `global` ManagedClusterSetBinding in that namespace first, or Helm will refuse to adopt it.
+
+When upgrading from policy-library 1.x, run `helm upgrade appset ./appset -f ./appset/values.yaml -f values.yaml` before the 2.0.0 pins reach any cluster's revision, so the binding exists before the Placements.
+
+Each element renders one Placement per cluster from the `selector` the ApplicationSet injects. Fleet-wide Placement settings (tolerations, claim/CEL selectors, ...) go under `placement:` in the root `values.yaml`; see [Placement Overview](https://github.com/PolicyStack/policystack-chart/blob/main/charts/policy-library/README.md#placement-overview).
+
 ## Overview
 
 Our GitOps implementation uses a hierarchical approach to values files, allowing for:
