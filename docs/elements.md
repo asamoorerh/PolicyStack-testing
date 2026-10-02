@@ -2,13 +2,41 @@
 
 An element is a Helm chart under `stack/` that renders ACM policies through the
 [policy-library](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md)
-chart. Create one from the repo root with `tools/create-element.sh`, which copies `sample-element/`
-under the name you give it ([usage](https://github.com/PolicyStack/PolicyStack/blob/main/tools/README.md#create-elementsh)).
+chart.
 
 Name it in lowercase kebab-case and keep the directory name and chart `name` identical. The
 Application, and so the Helm release, takes the directory name
 ([Applications](applicationset.md#applications)). The values key comes from the chart name.
 `element:` dependencies and the validator assume the two match.
+
+## Creating an element
+
+From the repo root:
+
+```sh
+./tools/create-element.sh
+```
+
+The script prompts for a name and a description, then:
+
+1. Copies `sample-element/` to `stack/<name>/`. If that directory exists and you confirm the
+   overwrite, it is deleted first.
+2. Sets `name` and `description` in `Chart.yaml`.
+3. Renames the sample's `stack.myTest` key to the camelCase name: `security-baseline` reads
+   `stack.securityBaseline`.
+
+Then finish it by hand:
+
+1. Delete `charts/` and `Chart.lock` from the new directory if they exist. They are gitignored, but
+   the script copies whatever your checkout of `sample-element/` holds, and the validator renders
+   with an existing archive instead of fetching the pinned library version.
+2. Cut `values.yaml` down. The sample shows every option of every policy type; keep what the
+   element uses, and keep `enabled: false`.
+3. Replace `converters/example.yaml` with one file per `templateNames` entry. The validator fails on
+   a missing converter (POLICY020) and warns on an unused one (POLICY021).
+4. Describe each setting with `# @desc:` and generate the README ([Element reference](#element-reference)).
+5. Run the [validator](validation.md).
+6. Turn the element on for one nonprod cluster in its `values/clusters/<cluster>.yaml`.
 
 ## Layout
 
@@ -120,7 +148,29 @@ renders an empty list
 **Short names.** Element names, policy names and the names of their config and operator policies
 end up in length-limited object names ([Naming limits](policies.md#naming-limits)).
 
-Run the [validator](validation.md) before opening a pull request.
+## Good practices
+
+- **One product per element.** Clusters turn an element on as a unit, and its name is in every
+  object name. An operator and its configuration belong together; unrelated settings do not.
+- **Put the element name in config and operator policy names.** ACM requires template names to be
+  unique across every Policy on a cluster, so two elements that both define an `install` policy
+  with a `ns-monitoring` config policy collide. metallb uses `metallb-instance`. The validator
+  reports collisions as POLICY003.
+- **Start in `inform`.** Ship a new policy with `remediationAction: inform`, roll it out to a
+  nonprod revision, read its compliance, then switch to `enforce`.
+- **Set `pruneObjectBehavior` before the first enforce.** It decides whether disabling a policy
+  deletes what it created, and a later change must sync before the element is disabled
+  ([Disabling an element](rollout.md#disabling-an-element)).
+- **Pin operator versions** where an unplanned upgrade would hurt
+  ([Operator upgrades](rollout.md#operator-upgrades)).
+- **Keep secrets out of values.** Values live in Git. Read runtime secrets on the hub with an ACM
+  hub template, escaped so Helm passes it through:
+  `'{{ "{{" }}hub fromSecret "<namespace>" "<secret>" "<key>" hub{{ "}}" }}'`
+  ([example](https://github.com/PolicyStack/PolicyStack/blob/main/stack/advanced-cluster-security/converters/acs-sync-collector.yaml)).
+  Helm and the validator see escaped templates as plain strings, so a mistake shows up only on the
+  cluster, as a `template-error` violation.
+- **Try changes on one cluster first.** Push a branch without `/` in its name and point a nonprod
+  cluster's revision label at it ([Promoting and rolling back](rollout.md#promoting-and-rolling-back)).
 
 ## Element reference
 
