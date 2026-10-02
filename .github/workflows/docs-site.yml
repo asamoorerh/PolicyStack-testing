@@ -51,10 +51,18 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write  # push gh-pages
-      pages: write     # request the Pages build
+    # Its deployment branch policy releases the App key to main only.
+    environment: github-pages
     steps:
+      # The gh-pages ruleset lets only this App push. GITHUB_TOKEN cannot be a ruleset bypass actor,
+      # and its pushes do not start a Pages build.
+      - id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DOCS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DOCS_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       # The deploy action works through a git worktree, so it needs a checkout.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,8 +83,4 @@ jobs:
           folder: site
           branch: gh-pages
           single-commit: true
-
-      # GitHub documents that a push made with GITHUB_TOKEN does not start a Pages build.
-      - env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent
+          token: ${{ steps.app-token.outputs.token }}

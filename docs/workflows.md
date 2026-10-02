@@ -56,10 +56,22 @@ PRs from forks are skipped. Their token is read-only. Run the generator locally 
 
 Builds this site from `docs/` with `zensical build --strict`. PRs only build.
 
-On `main`, a separate job with a write token publishes the build. It pushes `site/` plus
-`.nojekyll` to the `gh-pages` branch as a single commit, then requests a Pages build, because a push
-made with `GITHUB_TOKEN` does not start one. Pages serves the site from the root of `gh-pages`
-(Settings > Pages > Deploy from a branch).
+On `main`, a separate job publishes the build. It pushes `site/` plus `.nojekyll` to the `gh-pages`
+branch as a single commit, authenticated as a GitHub App. Pages serves the site from the root of
+`gh-pages` (Settings > Pages > Deploy from a branch).
+
+Only that App can change `gh-pages`. `GITHUB_TOKEN` cannot be a ruleset bypass actor, and its pushes
+do not start a Pages build. One-time setup:
+
+| Where | Setting |
+| ----- | ------- |
+| Org Settings > GitHub Apps | An App with no webhook and only **Contents: Read and write**, installed on this repository only |
+| Settings > Environments > `gh-pages-publish` | Deployment branches: `main` only. Variable `DOCS_APP_CLIENT_ID`, secret `DOCS_APP_PRIVATE_KEY` |
+| Settings > Rules > Rulesets | Branch ruleset on `gh-pages`: Restrict creations, Restrict updates, Restrict deletions, Block force pushes. Bypass list: the App only, Always allow |
+
+Keep all four rules in that ruleset: every publish force-pushes, and the App bypasses only the rules
+of rulesets that list it. Leave the `github-pages` environment as it is; the Pages build runs from
+`gh-pages`.
 
 The site is unversioned and built from `main`. For a cluster pinned to an older revision, read
 `docs/` at that revision on GitHub.
