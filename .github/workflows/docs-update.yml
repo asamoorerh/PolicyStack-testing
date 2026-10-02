@@ -45,10 +45,10 @@ jobs:
         id: regen
         run: |
           python tools/doc-generator.py
-          if [ -n "$(git status --porcelain -- docs/)" ]; then
+          if [ -n "$(git status --porcelain -- 'stack/*/README.md')" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "docs/ is already current." >> "$GITHUB_STEP_SUMMARY"
+            echo "Element READMEs are already current." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Commit, push and run checks
@@ -58,13 +58,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/
+          git add -- 'stack/*/README.md'
           git commit -m "docs: update documentation [auto-generated]"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
           # A push made with GITHUB_TOKEN does not start workflows, so run the checks on the new commit.
           gh workflow run docs-check.yml --ref "$BRANCH"
           gh workflow run validate.yml --ref "$BRANCH"
-          echo "Committed regenerated docs/ to $BRANCH." >> "$GITHUB_STEP_SUMMARY"
+          echo "Committed regenerated element READMEs to $BRANCH." >> "$GITHUB_STEP_SUMMARY"
 
       # Ignore failures: the label may already have been removed by hand.
       - name: Remove label

@@ -114,7 +114,6 @@ The documentation generator creates comprehensive markdown documentation from Po
 - Extracting `@description` and `@desc` annotations
 - Generating structured documentation for all policy types
 - Identifying configuration issues (orphaned policies)
-- Creating an index of all documented elements
 
 ### Architecture
 
@@ -148,8 +147,8 @@ pip install -r tools/requirements.txt
 # Generate documentation for all elements
 python tools/doc-generator.py
 
-# Custom directories
-python tools/doc-generator.py --stack-dir ./custom-stack --output-dir ./custom-docs
+# Custom stack directory
+python tools/doc-generator.py --stack-dir ./custom-stack
 
 # Single element documentation
 python tools/doc-generator.py --element security-baseline
@@ -212,12 +211,14 @@ Parser tests: `python -m unittest tools/test_doc_generator.py`
 
 The generator produces:
 
-#### Individual Element Documentation (`<element-name>.md`)
+#### Individual Element Documentation (`stack/<element-name>/README.md`)
 
 ```markdown
 # element-name - Policy Library Documentation
 
 > Element description from Chart.yaml
+
+Field reference: [policy-library](https://github.com/PolicyStack/PolicyStack-chart/tree/main/charts/policy-library)
 
 *Generated: 2025-09-05 14:30:00*
 
@@ -244,15 +245,11 @@ The generator produces:
 | **Total Resources** | **17** |
 ```
 
-#### Index File (`docs/README.md`)
-
-Lists all documented elements with links and provides comment notation guide.
-
 ## CI/CD Integration
 
 `docs-check.yml` runs the generator tests and `doc-generator.py --check` on pull requests, failing
-when `docs/` is stale. Adding the `update-docs` label runs `docs-update.yml`, which regenerates and
-commits `docs/` to the PR branch. See [docs/workflows.md](../docs/workflows.md).
+when an element README is stale. Adding the `update-docs` label runs `docs-update.yml`, which
+regenerates and commits `stack/*/README.md` to the PR branch. See [docs/workflows.md](../docs/workflows.md).
 
 ## Best Practices
 

@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - 'stack/**'
-      - 'docs/**'
       - 'tools/doc-generator.py'
       - 'tools/test_doc_generator.py'
       - 'tools/requirements.txt'
@@ -13,7 +12,6 @@ on:
     branches: [main]
     paths:
       - 'stack/**'
-      - 'docs/**'
       - 'tools/doc-generator.py'
       - 'tools/test_doc_generator.py'
       - 'tools/requirements.txt'
@@ -52,7 +50,7 @@ jobs:
       - name: Check docs are current
         run: |
           if ! python tools/doc-generator.py --check; then
-            msg="docs/ is out of date. Run 'python tools/doc-generator.py' and commit docs/, or add the update-docs label to the PR."
+            msg="Element READMEs are out of date. Run 'python tools/doc-generator.py' and commit stack/*/README.md, or add the update-docs label to the PR."
             echo "::error title=Documentation out of date::$msg"
             echo "$msg" >> "$GITHUB_STEP_SUMMARY"
             exit 1

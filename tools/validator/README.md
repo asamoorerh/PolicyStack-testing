@@ -21,6 +21,8 @@ In CI:
 
 ## Rules
 
+<!-- --8<-- [start:rules] -->
+
 | ID         | Severity | What it catches |
 |------------|----------|-----------------|
 | POLICY001  | error    | Policy/PolicySet ACM-replicated name `<ns>.<name>-<release>` > 63 chars; ConfigurationPolicy/OperatorPolicy/CertificatePolicy `metadata.name` (`<parent>-<sub>`) > 63 chars |
@@ -39,6 +41,8 @@ In CI:
 | POLICY080  | error    | `kubeconform` schema check on rendered manifests |
 | POLICY090  | error    | `Chart.yaml` name → camelCase mismatch with single key under `stack:` |
 | RENDER000  | error    | `helm template` failed |
+
+<!-- --8<-- [end:rules] -->
 
 ## Fixtures
 
