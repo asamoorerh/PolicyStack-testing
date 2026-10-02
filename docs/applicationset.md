@@ -9,14 +9,14 @@ Labels go on the cluster's ManagedCluster on the hub. The GitOpsCluster copies t
 | Label | Required | Effect |
 |---|---|---|
 | `git.example.com/revision` | Yes | Branch or tag every Application for the cluster renders from. Without it the cluster gets no Applications. Label values cannot contain `/`, so a branch with `/` in its name cannot be used. Changing it promotes or rolls back ([Promoting and rolling back](rollout.md#promoting-and-rolling-back)). |
-| `clusterID` | Yes; ACM sets it on OpenShift clusters | Becomes `selectedId`. The template uses `missingkey=error`, so a cluster without it fails to render. One failed render stops the whole ApplicationSet: Argo CD creates, updates and deletes no Applications for any cluster until the label is set. |
+| `clusterID` | Yes. ACM sets it on OpenShift clusters | Becomes `selectedId`. The template uses `missingkey=error`, so a cluster without it fails to render. One failed render stops the whole ApplicationSet. Argo CD creates, updates and deletes no Applications for any cluster until the label is set. |
 | `config.example.com/<category>.<priority>=<value>` | No | Adds `values/<category>s/<value>.yaml` to the cascade and an `In` expression for this label to the Placement selector. The priority orders the files ([Order](values.md#order)). |
 | `config.example.com/datacenter.<priority>=<datacenter>` | On the hub | A config label like any other. On the hub it also names the Applications and the hub values files. |
 | `local-cluster` | ACM sets it on the hub | Switches the cluster to hub naming and hub values files. |
 | `name` | ACM sets it | The ManagedCluster name. The Placement selector matches on it ([Placement](policies.md#placement)). |
 | `env.example.com/defaultstorageclass` | No | Becomes `selectedDefaultStorageClass`. |
 
-Categories are free-form: `config.example.com/tenant.40=payments` adds `values/tenants/payments.yaml`. The repo's priorities are environment `.10`, datacenter `.20`, platform `.30` and tenant `.40`. [Onboarding a cluster](rollout.md#onboarding-a-cluster) labels `prod-east-1` with them.
+Categories are dynamic. `config.example.com/tenant.40=payments` adds `values/tenants/payments.yaml`. The repo's priorities are environment `.10`, datacenter `.20`, platform `.30` and tenant `.40`. [Onboarding a cluster](rollout.md#onboarding-a-cluster) labels `prod-east-1` with them.
 
 Hub Application names and hub values files are keyed by datacenter, so hubs in the same datacenter share hub values files.
 
@@ -24,10 +24,10 @@ Hub Application names and hub values files are keyed by datacenter, so hubs in t
 
 A matrix generator combines:
 
-1. A clusters generator: every Argo CD cluster secret with a `git.example.com/revision` label.
-2. A git generator: every directory under `stack/` in `gitRepo`, at that cluster's revision.
+1. A clusters generator. Every Argo CD cluster secret with a `git.example.com/revision` label.
+2. A git generator. Every directory under `stack/` in `gitRepo`, at that cluster's revision.
 
-Each cluster and directory pair becomes one Application. The directory list comes from the cluster's own revision, so an element added on one branch reaches only clusters on a revision that contains it. Every directory gets an Application whether the element is enabled or not; a disabled element renders no objects.
+Each cluster and directory pair becomes one Application. The directory list comes from the cluster's own revision, so an element added on one branch reaches only clusters on a revision that contains it. Every directory gets an Application whether the element is enabled or not. A disabled element renders no objects.
 
 The GitOpsCluster from [Import clusters into Argo CD](install.md#import-clusters-into-argo-cd) creates one cluster secret per managed cluster. Clusters without the revision label are imported but get no Applications.
 
@@ -43,7 +43,7 @@ The GitOpsCluster from [Import clusters into Argo CD](install.md#import-clusters
 
 `<element>` is the directory name and `<cluster>` the ManagedCluster name. Argo CD uses the Application name as the Helm release name, and every rendered object name derives from it ([Rendered objects](policies.md#rendered-objects), [Naming limits](policies.md#naming-limits)).
 
-Argo CD deploys only to the hub; ACM delivers the policies to the managed clusters ([Placement](policies.md#placement)). The chart sets `policyNamespace` on every object it renders, so the destination namespace is unused.
+Argo CD deploys only to the hub. ACM delivers the policies to the managed clusters ([Placement](policies.md#placement)). The chart sets `policyNamespace` on every object it renders, so the destination namespace is unused.
 
 Automated sync leaves `allowEmpty` unset, so it never prunes an Application down to no objects ([Disabling an element](rollout.md#disabling-an-element)).
 
@@ -76,13 +76,25 @@ selectedId: <clusterID>
 selector:
   matchExpressions:
     config_example_com_datacenter_20:
-      {key: config.example.com/datacenter.20, operator: In, values: ["dc1"]}
+      key: config.example.com/datacenter.20
+      operator: In
+      values:
+        - "dc1"
     config_example_com_environment_10:
-      {key: config.example.com/environment.10, operator: In, values: ["prod"]}
+      key: config.example.com/environment.10
+      operator: In
+      values:
+        - "prod"
     config_example_com_platform_30:
-      {key: config.example.com/platform.30, operator: In, values: ["aws"]}
+      key: config.example.com/platform.30
+      operator: In
+      values:
+        - "aws"
     name:
-      {key: name, operator: In, values: ["prod-east-1"]}
+      key: name
+      operator: In
+      values:
+        - "prod-east-1"
 ```
 
 ## The appset chart

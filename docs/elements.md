@@ -22,7 +22,7 @@ The script prompts for a name and a description, then:
 1. Copies `sample-element/` to `stack/<name>/`. If that directory exists and you confirm the
    overwrite, it is deleted first.
 2. Sets `name` and `description` in `Chart.yaml`.
-3. Renames the sample's `stack.myTest` key to the camelCase name: `security-baseline` reads
+3. Renames the sample's `stack.myTest` key to the camelCase name. `security-baseline` reads
    `stack.securityBaseline`.
 
 Then finish it by hand:
@@ -30,7 +30,7 @@ Then finish it by hand:
 1. Delete `charts/` and `Chart.lock` from the new directory if they exist. They are gitignored, but
    the script copies whatever your checkout of `sample-element/` holds, and the validator renders
    with an existing archive instead of fetching the pinned library version.
-2. Cut `values.yaml` down. The sample shows every option of every policy type; keep what the
+2. Cut `values.yaml` down. The sample shows every option of every policy type, keep what the
    element uses, and keep `enabled: false`.
 3. Replace `converters/example.yaml` with one file per `templateNames` entry. The validator fails on
    a missing converter (POLICY020) and warns on an unused one (POLICY021).
@@ -151,7 +151,7 @@ end up in length-limited object names ([Naming limits](policies.md#naming-limits
 ## Good practices
 
 - **One product per element.** Clusters turn an element on as a unit, and its name is in every
-  object name. An operator and its configuration belong together; unrelated settings do not.
+  object name. An operator and its configuration belong together, unrelated settings do not.
 - **Put the element name in config and operator policy names.** ACM requires template names to be
   unique across every Policy on a cluster, so two elements that both define an `install` policy
   with a `ns-monitoring` config policy collide. metallb uses `metallb-instance`. The validator
@@ -175,8 +175,8 @@ end up in length-limited object names ([Naming limits](policies.md#naming-limits
 ## Element reference
 
 `stack/<element>/README.md` is generated from the element's `values.yaml` and its `@description` and
-`@desc` comments; do not edit it by hand. After changing `values.yaml`, run
-`python tools/doc-generator.py` and commit the README; `--check` reports stale READMEs without
+`@desc` comments, do not edit it by hand. After changing `values.yaml`, run
+`python tools/doc-generator.py` and commit the README, `--check` reports stale READMEs without
 writing them. Flags and comment syntax are in
 [tools/README.md](https://github.com/PolicyStack/PolicyStack/blob/main/tools/README.md#doc-generatorpy).
 

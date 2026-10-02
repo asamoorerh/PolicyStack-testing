@@ -1,13 +1,13 @@
 # CI Workflows
 
 The GitHub Actions workflows live in `.github/workflows/`. The checks run on pull requests and on
-pushes to `main`; Update Documentation fixes stale element READMEs on request.
+pushes to `main`. Update Documentation fixes stale element READMEs on request.
 
 | Workflow | Runs on | Fails when |
 | -------- | ------- | ---------- |
 | Policy Validate (`validate.yml`) | Changes to `stack/`, `values/`, `values.yaml`, `tools/validator/` | Validator tests fail or the validator reports an error |
 | Documentation Check (`docs-check.yml`) | Changes to `stack/`, the doc generator or its tests | Generator tests fail or a `stack/<element>/README.md` is out of date |
-| Update Documentation (`docs-update.yml`) | `update-docs` label added to a PR | Not a gate; it fixes what Documentation Check reports |
+| Update Documentation (`docs-update.yml`) | `update-docs` label added to a PR | Not a gate, it fixes what Documentation Check reports |
 | Documentation Site (`docs-site.yml`) | Every PR and push to `main` | The strict build finds a relative `.md` link or anchor that does not resolve, or a missing snippet |
 
 The checks also run from the Actions tab (`workflow_dispatch`). A newer push to the same PR cancels
@@ -18,10 +18,10 @@ the run in progress.
 1. Checks gofmt, vets, tests and builds `tools/validator` (`make -C tools/validator lint test build`)
    with the Go version from `tools/validator/go.mod`.
 2. Runs the validator against the fixture clusters with `--github`, so each finding is annotated on
-   the PR diff at the file and line to fix. Errors fail the job; warnings are annotated only.
+   the PR diff at the file and line to fix. Errors fail the job, warnings are annotated only.
 
 Helm is pinned by `HELM_VERSION` in the workflow. Keep it on the major the hub's Argo CD uses.
-POLICY080 is skipped: the chart emits only Policy, PolicySet, Placement and PlacementBinding, and
+POLICY080 is skipped. The chart emits only Policy, PolicySet, Placement and PlacementBinding, and
 the rule skips those kinds, so it would check nothing.
 
 To reproduce locally, see [Validation](validation.md).
@@ -50,7 +50,7 @@ Runs when the `update-docs` label is added to a PR from a branch in this reposit
    Policy Validate on the branch to check the new commit.
 4. Removes the label.
 
-PRs from forks are skipped: their token is read-only. Run the generator locally instead.
+PRs from forks are skipped. Their token is read-only. Run the generator locally instead.
 
 ## Documentation Site
 
@@ -72,7 +72,7 @@ zensical serve            # live preview
 zensical build --strict   # the CI check
 ```
 
-`serve` does not watch the validator README; restart it after editing the rules table. Strict mode
+`serve` does not watch the validator README, restart it after editing the rules table. Strict mode
 does not check absolute links, `nav` entries in `zensical.toml`, or content included through
 snippets. Keep the rules section of `tools/validator/README.md` free of relative links.
 

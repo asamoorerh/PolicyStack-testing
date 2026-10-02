@@ -1,10 +1,10 @@
 # Policies
 
-Elements render their ACM objects with the [policy-library](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md) chart; its README is the field reference. PolicyStack fixes three inputs: the values key an element reads, the release name every object name builds on, and the selector that targets one cluster.
+Elements render their ACM objects with the [policy-library](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md) chart, its README is the field reference. PolicyStack fixes three inputs. The values key an element reads, the release name every object name builds on, and the selector that targets one cluster.
 
 ## Element values
 
-An element reads `stack.<key>`, where `<key>` is the camelCase form of the chart name in its `Chart.yaml`: the `user-workload-monitoring` chart reads `stack.userWorkloadMonitoring`. Files in the [values cascade](values.md#order) use the same keys, so one cluster file configures many elements and each chart reads only its own key. The validator reports a mismatched key as POLICY090.
+An element reads `stack.<key>`, where `<key>` is the camelCase form of the chart name in its `Chart.yaml`. The `user-workload-monitoring` chart reads `stack.userWorkloadMonitoring`. Files in the [values cascade](values.md#order) use the same keys, so one cluster file configures many elements and each chart reads only its own key. The validator reports a mismatched key as POLICY090.
 
 Every chart also reads the top-level keys `policyNamespace`, `selector` and `placement`. Nothing renders unless `stack.<key>.enabled` is true.
 
@@ -21,7 +21,7 @@ Names build on the release, which is the Application name ([Applications](applic
 | `Placement` | `<release>` | `disablePlacements` is not true. |
 | `PlacementBinding` | `<release>` | `disablePlacements` is not true and there is a subject to bind. Subjects are the rendered Policies, or the rendered PolicySets when `usePolicySetsPlacements` is true. |
 
-Policies, PolicySets, Placements and PlacementBindings live on the hub in `policyNamespace`, set to `policy` in the root [`values.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/values.yaml). The chart ignores `policies[].namespace`, although its README lists it. Templates have no namespace of their own: they sit inside the Policy's `policy-templates`, and ACM creates them in the cluster's namespace on the managed cluster.
+Policies, PolicySets, Placements and PlacementBindings live on the hub in `policyNamespace`, set to `policy` in the root [`values.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/values.yaml). The chart ignores `policies[].namespace`, although its README lists it. Templates have no namespace of their own. They sit inside the Policy's `policy-templates`, and ACM creates them in the cluster's namespace on the managed cluster.
 
 ## Placement
 
@@ -33,9 +33,18 @@ spec:
   - requiredClusterSelector:
       labelSelector:
         matchExpressions:
-        - {key: config.example.com/datacenter.20, operator: In, values: [dc2]}
-        - {key: config.example.com/environment.10, operator: In, values: [nonprod]}
-        - {key: name, operator: In, values: [nonprod-west-1]}
+        - key: config.example.com/datacenter.20
+          operator: In
+          values:
+            - dc2
+        - key: config.example.com/environment.10
+          operator: In
+          values:
+            - nonprod
+        - key: name
+          operator: In
+          values:
+            - nonprod-west-1
 ```
 
 A top-level `placement:` key in any cascade file merges into that spec ([Placement overview](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md#placement-overview)).
@@ -48,7 +57,7 @@ ACM replicates each Policy into the cluster's namespace on the hub, and names an
 
 Validator rule POLICY001 holds `<policyNamespace>.<policy>-<release>`, `<policyNamespace>.<set>-<release>` and every template name (`<policy>-<name>`) to 63 characters ([Rules](validation.md#rules)).
 
-Worked example: metallb on `nonprod-west-1`, release `metallb-nonprod-west-1`. The cluster file turns on the `addressing` toggle; `quota` stays toggled off and renders nothing.
+Worked example: metallb on `nonprod-west-1`, release `metallb-nonprod-west-1`. The cluster file turns on the `addressing` toggle, `quota` stays toggled off and renders nothing.
 
 | Entry | Hub Policy | Replicated name | Characters |
 |---|---|---|---|
@@ -56,7 +65,7 @@ Worked example: metallb on `nonprod-west-1`, release `metallb-nonprod-west-1`. T
 | `config` | `config-metallb-nonprod-west-1` | `policy.config-metallb-nonprod-west-1` | 36 |
 | `addressing` | `addressing-metallb-nonprod-west-1` | `policy.addressing-metallb-nonprod-west-1` | 40 |
 
-Templates: the OperatorPolicy `install-metallb` with its `install-metallb-ns` and `install-metallb-status`, then `config-metallb-instance`, `addressing-pools`, `addressing-l2`, `addressing-bgp` and `addressing-peers`. The Placement and PlacementBinding are both `metallb-nonprod-west-1`.
+Templates. the OperatorPolicy `install-metallb` with its `install-metallb-ns` and `install-metallb-status`, then `config-metallb-instance`, `addressing-pools`, `addressing-l2`, `addressing-bgp` and `addressing-peers`. The Placement and PlacementBinding are both `metallb-nonprod-west-1`.
 
 Render it from the repo root. The release name stands in for the Application name and `baseline.yaml` for the injected selector ([Validation](validation.md)).
 

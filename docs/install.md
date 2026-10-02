@@ -56,13 +56,3 @@ The namespace and the binding carry `helm.sh/resource-policy: keep`. The binding
 `helm uninstall appset` deletes every Application with the ApplicationSet but leaves their Policies enforcing ([Removing an element](rollout.md#removing-an-element)).
 
 Next: [Onboarding a cluster](rollout.md#onboarding-a-cluster).
-
-## Upgrading from policy-library 1.x
-
-policy-library 1.x renders PlacementRules. 2.0.0 renders Placements, which need the `global` binding the appset chart creates ([Placement](policies.md#placement)). Upgrade the appset release before the 2.0.0 pins in `stack/*/Chart.yaml` reach any cluster's revision:
-
-```sh
-helm upgrade appset ./appset -f ./appset/values.yaml -f values.yaml
-```
-
-Without the binding, the 2.0.0 Placements select no clusters and the upgraded elements' policies stop applying. Add `--take-ownership` here too if a hand-made `global` binding exists in `policy`.

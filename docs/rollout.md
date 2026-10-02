@@ -1,6 +1,6 @@
 # Rolling out changes
 
-A cluster runs what Git holds at the revision its `git.<baseDomain>/revision` label pins: the element charts, their policy-library pins and every values file. To roll out a change, commit it and move cluster labels to a revision that contains it.
+A cluster runs what Git holds at the revision its `git.<baseDomain>/revision` label pins. The element charts, their policy-library pins and every values file. To roll out a change, commit it and move cluster labels to a revision that contains it.
 
 ## Onboarding a cluster
 
@@ -36,7 +36,7 @@ An element that exists at the new revision but not the old one gets a new Applic
 
 ## Disabling an element
 
-Set `enabled: false` under the element's key in a layer that outranks every layer enabling it ([Order](values.md#order)). `values/environments/prod.yaml` enables `openshiftDns`; to turn it off on `prod-east-1` only, add this to `values/clusters/prod-east-1.yaml`:
+Set `enabled: false` under the element's key in a layer that outranks every layer enabling it ([Order](values.md#order)). `values/environments/prod.yaml` enables `openshiftDns`, to turn it off on `prod-east-1` only, add this to `values/clusters/prod-east-1.yaml`:
 
 ```yaml
 stack:
@@ -46,7 +46,7 @@ stack:
 
 To turn off one part of an element instead, set its [toggle](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md#toggles).
 
-Once the change reaches the cluster's revision, the element renders nothing. The ApplicationSet leaves `allowEmpty` unset, so automated sync refuses to prune every object of an Application: the Application goes OutOfSync and its policies keep enforcing. Sync it once with pruning, from the Argo CD UI or CLI:
+Once the change reaches the cluster's revision, the element renders nothing. The ApplicationSet leaves `allowEmpty` unset, so automated sync refuses to prune every object of an Application. The Application goes OutOfSync and its policies keep enforcing. Sync it once with pruning, from the Argo CD UI or CLI:
 
 ```sh
 argocd app sync openshift-dns-prod-east-1 --prune
@@ -54,12 +54,12 @@ argocd app sync openshift-dns-prod-east-1 --prune
 
 Argo CD then deletes the element's objects from `policy`, and ACM removes its policies from the managed cluster. The objects those policies created stay on the managed cluster:
 
-- An enforced ConfigurationPolicy deletes its objects only when it sets `pruneObjectBehavior`: `DeleteIfCreated` removes the objects it created, `DeleteAll` every object it manages. ACM's default is `None`. The chart passes `configPolicies[].pruneObjectBehavior` through; set it and let it sync before disabling the element.
+- An enforced ConfigurationPolicy deletes its objects only when it sets `pruneObjectBehavior`: `DeleteIfCreated` removes the objects it created, `DeleteAll` every object it manages. ACM's default is `None`. The chart passes `configPolicies[].pruneObjectBehavior` through, set it and let it sync before disabling the element.
 - Deleting an OperatorPolicy leaves the operator installed.
 
 ## Removing an element
 
-The ApplicationSet sets `preserveResourcesOnDeletion`, and its Applications carry no resources finalizer. Deleting an Application therefore leaves the element's objects in `policy`: its Policies stay bound to the cluster and keep enforcing, with nothing managing them. An Application is deleted when:
+The ApplicationSet sets `preserveResourcesOnDeletion`, and its Applications carry no resources finalizer. Deleting an Application therefore leaves the element's objects in `policy`, its Policies stay bound to the cluster and keep enforcing, with nothing managing them. An Application is deleted when:
 
 - `stack/<element>` does not exist at the cluster's revision.
 - The cluster loses its revision label ([Removing a cluster's revision label](#removing-a-clusters-revision-label)).
@@ -91,7 +91,7 @@ Each `operatorPolicies[]` entry renders an OperatorPolicy ([Operator Policy Opti
 | `Automatic` | listed | The Subscription is set to manual approval. The policy approves an InstallPlan only when the CSV it installs is in `versions` or equals `subscription.startingCSV`. |
 | `None` | either | The policy approves the initial install only, subject to `versions`. It never approves an upgrade. |
 
-An informing policy approves nothing; it reports an installed CSV missing from a non-empty `versions` as noncompliant.
+An informing policy approves nothing, it reports an installed CSV missing from a non-empty `versions` as noncompliant.
 
 The metallb element ships with `upgradeApproval: Automatic` and no `versions`. To control its upgrades, add `versions` to its entry in [`stack/metallb/values.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/stack/metallb/values.yaml):
 

@@ -69,8 +69,8 @@ The files under [values/](https://github.com/PolicyStack/PolicyStack/tree/main/v
 | File | Selected by | Holds |
 |---|---|---|
 | `values/environments/prod.yaml` | `environment.10=prod` | The security and compliance baseline for every prod cluster: cert-manager, External Secrets, the Compliance Operator, manual remediations and cluster DNS |
-| `values/environments/nonprod.yaml` | `environment.10=nonprod` | Placeholder; sets nothing |
-| `values/datacenters/dc1.yaml` | `datacenter.20=dc1` | Placeholder; sets nothing |
+| `values/environments/nonprod.yaml` | `environment.10=nonprod` | Placeholder, sets nothing |
+| `values/datacenters/dc1.yaml` | `datacenter.20=dc1` | Placeholder, sets nothing |
 | `values/datacenters/dc2.yaml` | `datacenter.20=dc2` | Site facts only: the registry allowlist through the dc2 mirror. Turns no element on |
 | `values/platforms/aws.yaml` | `platform.30=aws` | Toggles for the node elements: clone the worker MachineSet |
 | `values/platforms/vmware.yaml` | `platform.30=vmware` | Toggles for the node elements: clone each worker MachineSet, one per vSphere failure domain |
@@ -80,7 +80,7 @@ The files under [values/](https://github.com/PolicyStack/PolicyStack/tree/main/v
 | `values/clusters/acm-dc1.yaml` | The hub in dc1 | The hub's elements, and a commented list of the elements left off and why |
 | `values/clusters/prod-east-1.yaml` | ManagedCluster `prod-east-1` | Infra nodes, machine health checks, an update channel pin and user workload monitoring |
 | `values/clusters/nonprod-west-1.yaml` | ManagedCluster `nonprod-west-1` | Enforces the dc2 registry allowlist, the cluster's own MetalLB address pool, and user workload monitoring |
-| `values/clusters/aws-prod.yaml` | ManagedCluster `aws-prod` | Values for an AWS test cluster: the OpenShift Data Foundation to Loki storage chain and additional operator installs. Rename it to the target ManagedCluster name before use; its header lists the labels it expects |
+| `values/clusters/aws-prod.yaml` | ManagedCluster `aws-prod` | Values for an AWS test cluster: the OpenShift Data Foundation to Loki storage chain and additional operator installs. Rename it to the target ManagedCluster name before use, its header lists the labels it expects |
 
 CI renders every element with the files the validator's fixture clusters select ([Validation](validation.md)). None of them selects `vmware.yaml`, `payments.yaml` or `aws-prod.yaml`, so CI never reads them.
 
@@ -121,7 +121,7 @@ toggles:
   restore: false              # element default
 config:
   replicas: 1                 # clusters/prod-east-1.yaml
-  zones:                      # clusters/prod-east-1.yaml; replaces the default []
+  zones:                      # clusters/prod-east-1.yaml, replaces the default []
     - us-east-1a
     - us-east-1b
     - us-east-1c
