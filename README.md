@@ -1,7 +1,7 @@
 # PolicyStack
 PolicyStack is a GitOps implementation utilizing ACM (Advanced Cluster Management) policies to propagate configuration. The purpose is to create a "stack" of policies to apply to clusters. It allows for fine-grained configuration changes on various different bases (per-cluster, per-environment, etc). The included helm chart allows for `elements` (defined as a single helm chart inside the stack) in this "policy stack" to be modified at any point (unlike an actual stack, each element can be modified and enabled/disabled at any point). It also allows for rapid development and integration of new configurations due to the simple nature of helm.
 ## Architecture
-[docs/architecture.drawio](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net)) shows the repository, the ACM hub (Argo CD, ManagedClusters, Governance) and the managed clusters, with the numbered flow from Git to an enforced policy.
+[docs/architecture.drawio](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FPolicyStack%2FPolicyStack%2Frefs%2Fheads%2Fmain%2Fdocs%2Farchitecture.drawio)) shows the repository, the ACM hub (Argo CD, ManagedClusters, Governance) and the managed clusters, with the numbered flow from Git to an enforced policy.
 
 ## Tools
 ### How to create new configuration
