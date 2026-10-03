@@ -1,0 +1,57 @@
+[project]
+site_name = "PolicyStack"
+# Project Pages paths are case-sensitive; the canonical repo name is PolicyStack/PolicyStack.
+site_url = "https://policystack.github.io/PolicyStack/"
+repo_url = "https://github.com/PolicyStack/PolicyStack"
+# Inferred wrongly from repo_url otherwise: repo_name as "GitHub", edit_uri as edit/master/docs.
+repo_name = "PolicyStack/PolicyStack"
+edit_uri = "edit/main/docs/"
+# Zensical does not check nav: a missing target ships as a dead link.
+nav = [
+  { "Overview" = "index.md" },
+  { "Architecture" = [
+    { "Clusters and Applications" = "applicationset.md" },
+    { "Values cascade" = "values.md" },
+    { "Policies" = "policies.md" },
+  ] },
+  { "Operations" = [
+    { "Installation" = "install.md" },
+    { "Rolling out changes" = "rollout.md" },
+  ] },
+  { "Development" = [
+    { "Writing an element" = "elements.md" },
+    { "Validation" = "validation.md" },
+    { "CI workflows" = "workflows.md" },
+  ] },
+]
+
+[project.theme]
+features = ["content.action.edit", "content.code.copy", "navigation.sections"]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+# Setting this table replaces Zensical's default extension set. It exists for snippets, which
+# validation.md uses to include the rules table from tools/validator/README.md. highlight values are
+# Zensical's defaults. Run zensical from the repo root: snippet paths resolve against the cwd.
+[project.markdown_extensions]
+toc.permalink = true
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.snippets.check_paths = true
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+
+[project.extra]
+generator = false

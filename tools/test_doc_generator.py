@@ -1,10 +1,14 @@
-"""Tests for doc-generator.py annotation parsing. Run: python -m unittest tools/test_doc_generator.py"""
+"""Tests for doc-generator.py. Run: python -m unittest tools/test_doc_generator.py"""
 
+import contextlib
 import importlib.util
+import io
+import re
 import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
 
 _spec = importlib.util.spec_from_file_location("doc_generator", Path(__file__).with_name("doc-generator.py"))
 doc_generator = importlib.util.module_from_spec(_spec)
@@ -17,7 +21,7 @@ class AnnotationParsingTest(unittest.TestCase):
             f.write(textwrap.dedent(values))
         self.addCleanup(Path(f.name).unlink)
         _, comments = doc_generator.YAMLLoader(Path(f.name)).load()
-        return doc_generator.DocumentationGenerator(check_mode=True).get_field_description(comments, *path)
+        return doc_generator.DocumentationGenerator().get_field_description(comments, *path)
 
     def test_single_line(self):
         got = self.describe("""
@@ -116,7 +120,7 @@ class WriteIfChangedTest(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.path = Path(tmp.name) / "el.md"
-        self.gen = doc_generator.DocumentationGenerator(check_mode=True)
+        self.gen = doc_generator.DocumentationGenerator()
 
     def test_writes_missing_file(self):
         self.assertTrue(self.gen.write_if_changed(self.path, self.OLD))
@@ -133,6 +137,58 @@ class WriteIfChangedTest(unittest.TestCase):
         new = self.OLD.replace("body", "changed body")
         self.assertTrue(self.gen.write_if_changed(self.path, new))
         self.assertEqual(self.path.read_text(), new)
+
+
+class ElementReadmeTest(unittest.TestCase):
+    STUB = "# Sample App\nPlease see the library chart documentation.\n"
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.enterContext(contextlib.chdir(tmp.name))
+        self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+        self.element = Path("stack/my-el")
+        self.element.mkdir(parents=True)
+        (self.element / "Chart.yaml").write_text("name: my-el\ndescription: Test element\n")
+        (self.element / "values.yaml").write_text("stack:\n  myEl:\n    enabled: false\n")
+        self.readme = self.element / "README.md"
+        self.gen = doc_generator.DocumentationGenerator()
+
+    def test_generate_writes_element_readme(self):
+        self.gen.generate_all_docs()
+        content = self.readme.read_text()
+        self.assertTrue(content.startswith("# my-el - Policy Library Documentation"))
+        self.assertIn("(https://github.com/PolicyStack/PolicyStack-chart/tree/main/charts/policy-library)", content)
+        self.assertFalse(Path("docs").exists())
+
+    def test_check_passes_after_generate(self):
+        self.gen.generate_all_docs()
+        self.assertEqual(self.gen.check_all_docs(), 0)
+
+    def test_check_ignores_timestamp(self):
+        self.gen.generate_all_docs()
+        stale = re.sub(r"\*Generated: [^*]+\*", "*Generated: 2000-01-01 00:00:00*", self.readme.read_text())
+        self.readme.write_text(stale)
+        self.assertEqual(self.gen.check_all_docs(), 0)
+
+    def test_check_fails_on_stub(self):
+        self.readme.write_text(self.STUB)
+        self.assertEqual(self.gen.check_all_docs(), 1)
+
+    def test_check_fails_when_missing(self):
+        self.assertEqual(self.gen.check_all_docs(), 1)
+
+    def test_element_without_stack_key_is_left_alone(self):
+        (self.element / "values.yaml").write_text("stack: {}\n")
+        self.readme.write_text(self.STUB)
+        self.gen.generate_all_docs()
+        self.assertEqual(self.readme.read_text(), self.STUB)
+        self.assertEqual(self.gen.check_all_docs(), 0)
+
+    def test_main_single_element(self):
+        with mock.patch("sys.argv", ["doc-generator.py", "--stack-dir", "stack", "--element", "my-el"]):
+            self.assertEqual(doc_generator.main(), 0)
+        self.assertTrue(self.readme.read_text().startswith("# my-el - Policy Library Documentation"))
 
 
 if __name__ == "__main__":
