@@ -2,7 +2,7 @@
 PolicyStack manages OpenShift cluster configuration as ACM policies. Each directory under `stack/` is an element: a Helm chart that renders `Policy` objects through the [policy-library](https://github.com/PolicyStack/PolicyStack-chart/tree/main/charts/policy-library) chart. On the ACM hub, an Argo CD ApplicationSet creates one Application per element for every labeled managed cluster, at the Git revision that cluster's label pins. Argo CD syncs the policies to the hub and ACM enforces them on each cluster.
 
 Documentation: https://policystack.github.io/PolicyStack/ (source in [`docs/`](docs/)). Each element's settings are listed in `stack/<element>/README.md`.
-[diagram/architecture.drawio](diagrams/architecture.drawio) (open in [draw.io](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FPolicyStack%2FPolicyStack%2Frefs%2Fheads%2Fmain%2Fdaigrams%2Farchitecture.drawio)) shows the whole process architecture diagram.
+[diagrams/architecture.drawio](diagrams/architecture.drawio) (open in [draw.io](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FPolicyStack%2FPolicyStack%2Frefs%2Fheads%2Fmain%2Fdiagrams%2Farchitecture.drawio)) shows the whole process architecture diagram.
 
 ## Quick start
 
