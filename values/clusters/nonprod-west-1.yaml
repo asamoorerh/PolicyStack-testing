@@ -3,9 +3,9 @@
 # The file name must match the ManagedCluster name; a mismatch is skipped silently. Fleet file
 # fleet/nonprod-west-1.yaml on the default branch:
 #   revision: main             # required; branch, tag or SHA
-#   config:
-#     environment.10: nonprod
-#     datacenter.20: dc2
+#   valueFiles:
+#     - environments/nonprod.yaml
+#     - datacenters/dc2.yaml
 #
 # Site settings come from values/datacenters/dc2.yaml. This file turns elements on and sets what is
 # specific to this cluster.

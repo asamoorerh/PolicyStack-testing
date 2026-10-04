@@ -46,9 +46,9 @@ flowchart LR
 | Term | Meaning |
 |---|---|
 | [Element](elements.md) | A directory under `stack/` holding a Helm chart that depends on the policy-library chart. Its values define the policies it renders. |
-| [Fleet file](applicationset.md#fleet-files) | A file on the repo's default branch that declares one cluster: `fleet/<cluster>.yaml`, or `fleet/hubs/<hubName>.yaml` for a hub. It sets the cluster's revision and config entries. |
+| [Fleet file](applicationset.md#fleet-files) | A file on the repo's default branch that declares one cluster: `fleet/<cluster>.yaml`, or `fleet/hubs/<hubName>.yaml` for a hub. It sets the cluster's revision and the values files it reads. |
 | [Hub](install.md#prerequisites) | The cluster that runs ACM and OpenShift GitOps. It runs the ApplicationSet and holds the Applications and Policies. By default ACM also manages the hub as `local-cluster`, so it can have a fleet file like any other managed cluster, at `fleet/hubs/<hubName>.yaml` ([The hub](applicationset.md#the-hub)). |
 | [Managed cluster](rollout.md#onboarding-a-cluster) | A cluster that ACM manages and the GitOpsCluster imports into Argo CD. It gets one Application per element once it has a fleet file. |
-| [Release](applicationset.md#applications) | The Application name, which Argo CD also uses as the Helm release name. `<element>-<cluster>`, or `<element>-acm-<datacenter>` on the hub. Policy, PolicySet, Placement and PlacementBinding names are built from it. |
+| [Release](applicationset.md#applications) | The Application name, which Argo CD also uses as the Helm release name. `<element>-<cluster>`, or `<element>-<hubName>` on the hub. Policy, PolicySet, Placement and PlacementBinding names are built from it. |
 | [Revision](applicationset.md#revision) | The Git branch, tag or SHA in a cluster's fleet file. All of that cluster's Applications render from it. |
 | [Values cascade](values.md#order) | The values files Argo CD passes to Helm for one Application, most of them chosen from the `config` entries in the cluster's fleet file. Later files override earlier ones. |

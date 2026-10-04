@@ -3,10 +3,10 @@
 # The file name must match the ManagedCluster name; a mismatch is skipped silently. Fleet file
 # fleet/prod-east-1.yaml on the default branch:
 #   revision: main             # required; branch, tag or SHA
-#   config:
-#     environment.10: prod
-#     datacenter.20: dc1
-#     platform.30: aws
+#   valueFiles:
+#     - environments/prod.yaml
+#     - datacenters/dc1.yaml
+#     - platforms/aws.yaml
 #
 # values/environments/prod.yaml supplies the security baseline and values/platforms/aws.yaml selects
 # the AWS MachineSet path for node elements. This file adds the cluster's own workload.

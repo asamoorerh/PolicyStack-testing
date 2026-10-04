@@ -48,19 +48,13 @@ spec:
           prune: true
           selfHeal: true
   templatePatch: |
-    {{ "{{" }}- /* First pass: extract datacenter */{{ "}}" }}
-    {{ "{{" }}- $datacenter := "" {{ "}}" }}
-    {{ "{{" }}- range $key, $value := index . "config" {{ "}}" }}
-      {{ "{{" }}- if hasPrefix "datacenter." $key {{ "}}" }}
-        {{ "{{" }}- $datacenter = $value {{ "}}" }}
-      {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- $name := .name {{ "}}" }}
+    {{ "{{" }}- if index .metadata.labels "local-cluster" {{ "}}" }}
+      {{ "{{" }}- $name = {{ .Values.hubName | quote }} {{ "}}" }}
+    metadata:
+      name: '{{ "{{" }}.path.basenameNormalized{{ "}}" }}-{{ "{{" }} $name {{ "}}" }}'
     {{ "{{" }}- end {{ "}}" }}
 
-    {{ "{{" }}- if index .metadata.labels "local-cluster" {{ "}}" }}
-    metadata:
-      name: '{{ "{{" }}.path.basenameNormalized{{ "}}" }}-acm-{{ "{{" }} $datacenter {{ "}}" }}'
-    {{ "{{" }}- end {{ "}}" }}
-  
     spec:
       source:
         helm:
@@ -68,94 +62,17 @@ spec:
           valueFiles:
           - values.yaml
           - ../../values.yaml
-          {{ "{{" }}- /* Store the cluster name for use in nested scopes */{{ "}}" }}
-          {{ "{{" }}- $clusterName := .name {{ "}}" }}
-
-          {{ "{{" }}- /* Organize config entries by priority using a dictionary */{{ "}}" }}
-          {{ "{{" }}- $priorityMap := dict {{ "}}" }}
-          {{ "{{" }}- $multiValues := dict {{ "}}" }}
-
-          {{ "{{" }}- /* Gather the fleet file's config entries, keyed <category>.<priority> */{{ "}}" }}
-          {{ "{{" }}- range $key, $value := index . "config" {{ "}}" }}
-            {{ "{{" }}- $dotParts := splitList "." $key {{ "}}" }}
-            {{ "{{" }}- if gt (len $dotParts) 1 {{ "}}" }}
-              {{ "{{" }}- $category := index $dotParts 0 {{ "}}" }}
-              {{ "{{" }}- $priorityStr := index $dotParts 1 {{ "}}" }}
-
-              {{ "{{" }}- /* Add to priority map */{{ "}}" }}
-              {{ "{{" }}- $paddedKey := printf "%05s-%s-%s" $priorityStr $category $value {{ "}}" }}
-              {{ "{{" }}- $_ := set $priorityMap $paddedKey (dict "category" $category "value" $value) {{ "}}" }}
-
-              {{ "{{" }}- /* For multi-value support, append to a list if it exists or create a new one */{{ "}}" }}
-              {{ "{{" }}- if not (hasKey $multiValues $category) {{ "}}" }}
-                {{ "{{" }}- $_ := set $multiValues $category (list) {{ "}}" }}
-              {{ "{{" }}- end {{ "}}" }}
-              {{ "{{" }}- $existingValues := index $multiValues $category {{ "}}" }}
-              {{ "{{" }}- $_ := set $multiValues $category (append $existingValues $value) {{ "}}" }}
-
-              {{ "{{" }}- /* Update datacenter if found */{{ "}}" }}
-              {{ "{{" }}- if eq $category "datacenter" {{ "}}" }}
-                {{ "{{" }}- $datacenter = $value {{ "}}" }}
-              {{ "{{" }}- end {{ "}}" }}
-            {{ "{{" }}- end {{ "}}" }}
+          {{ "{{" }}- range index . "valueFiles" {{ "}}" }}
+          - ../../values/{{ "{{" }} . {{ "}}" }}
           {{ "{{" }}- end {{ "}}" }}
-
-          {{ "{{" }}- /* Get sorted keys */{{ "}}" }}
-          {{ "{{" }}- $sortedKeys := keys $priorityMap | sortAlpha {{ "}}" }}
-        
-          {{ "{{" }}- /* Collect selected values for later use */{{ "}}" }}
-          {{ "{{" }}- $selectedValues := dict {{ "}}" }}
-
-          {{ "{{" }}- /* Process sorted config entries */{{ "}}" }}
-          {{ "{{" }}- range $sortKey := $sortedKeys {{ "}}" }}
-            {{ "{{" }}- $label := index $priorityMap $sortKey {{ "}}" }}
-            {{ "{{" }}- $category := $label.category {{ "}}" }}
-            {{ "{{" }}- $value := $label.value {{ "}}" }}
-
-            {{ "{{" }}- /* Store for selected values - last one wins for backward compatibility */{{ "}}" }}
-            {{ "{{" }}- $_ := set $selectedValues $category $value {{ "}}" }}
-          
-            {{ "{{" }}- /* Pluralize the category */{{ "}}" }}
-            {{ "{{" }}- $pluralCategory := printf "%ss" $category {{ "}}" }}
-          
-            {{ "{{" }}- /* Add value file */{{ "}}" }}
-          - ../../values/{{ "{{" }} $pluralCategory {{ "}}" }}/{{ "{{" }} $value {{ "}}" }}.yaml
-          {{ "{{" }}- end {{ "}}" }}
-
-          {{ "{{" }}- /* Handle local-cluster special case */{{ "}}" }}
-          {{ "{{" }}- if index .metadata.labels "local-cluster" {{ "}}" }}
-          - ../../values/acm/acm-{{ "{{" }} $datacenter {{ "}}" }}.yaml
-          - ../../values/clusters/acm-{{ "{{" }} $datacenter {{ "}}" }}.yaml
-          {{ "{{" }}- else {{ "}}" }}
-          - ../../values/clusters/{{ "{{" }} $clusterName {{ "}}" }}.yaml
-          {{ "{{" }}- end {{ "}}" }}
-
+          - ../../values/clusters/{{ "{{" }} $name {{ "}}" }}.yaml
           valuesObject:
-            {{ "{{" }}- /* Include both single selected values for backward compatibility */{{ "}}" }}
-            {{ "{{" }}- range $category, $value := $selectedValues {{ "}}" }}
-            selected{{ "{{" }} title $category {{ "}}" }}: {{ "{{" }} $value {{ "}}" }}
-            {{ "{{" }}- end {{ "}}" }}
-          
-            {{ "{{" }}- /* And add multi-value support */{{ "}}" }}
-            {{ "{{" }}- range $category, $values := $multiValues {{ "}}" }}
-            selected{{ "{{" }} title $category {{ "}}" }}Values:
-              {{ "{{" }}- range $value := $values {{ "}}" }}
-              - {{ "{{" }} $value {{ "}}" }}
-              {{ "{{" }}- end {{ "}}" }}
-            {{ "{{" }}- end {{ "}}" }}
-          
-            {{ "{{" }}- if index .metadata.labels "local-cluster" {{ "}}" }}
-            selectedName: acm-{{ "{{" }} $datacenter {{ "}}" }}
-            {{ "{{" }}- else {{ "}}" }}
-            selectedName: {{ "{{" }} $clusterName {{ "}}" }}
-            {{ "{{" }}- end {{ "}}" }}
+            selectedName: {{ "{{" }} $name {{ "}}" }}
             selectedId: {{ "{{" }} .metadata.labels.clusterID {{ "}}" }}
-
             selector:
               matchExpressions:
                 name:
                   key: name
                   operator: In
                   values:
-                    - {{ "{{" }} $clusterName | quote {{ "}}" }}
-
+                    - {{ "{{" }} .name | quote {{ "}}" }}

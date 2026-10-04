@@ -280,7 +280,7 @@ func TestPolicy050_FleetFileIssues(t *testing.T) {
 	}
 	cl := &cascade.Resolved{ClusterName: "x", Issues: []fixtures.Issue{
 		{Line: 2, Message: "field revison not found in type fixtures.fleetFile"},
-		{Message: `config "environment": missing priority`},
+		{Message: `valueFiles "platforms/aws.yaml": not a file under values/`},
 	}}
 	got := (&LabelCheck{}).Run(Context{Cluster: cl})
 	if len(got) != 2 {

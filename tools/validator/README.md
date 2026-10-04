@@ -35,7 +35,7 @@ In CI:
 | POLICY030  | error    | Invalid enum: severity / remediationAction / complianceType / upgradeApproval |
 | POLICY031  | error/warning | values keys policy-library never reads: `enable:` (element renders nothing) and `defaultPolicy:` (metadata silently dropped) are errors; `default.severity`/`.remediationAction`/`.disabled` are warnings. Also flags `rawTemplate: true` with more than one `templateNames` entry |
 | POLICY040  | error    | `policySets[].policies[]` references a name not in `policies[]` |
-| POLICY050  | error    | Invalid fleet file: YAML error, unknown key, missing or empty `revision`, `revision` or `config` value Argo CD reads as a number or boolean, `config` value that is not a label value, malformed or duplicate `<category>.<priority>`, hub without a `datacenter` entry |
+| POLICY050  | error    | Invalid fleet file: YAML error, unknown key, missing or empty `revision`, `revision` or `valueFiles` entry Argo CD reads as a number or boolean, `valueFiles` entry that is null, listed twice, or not a file under `values/` |
 | POLICY060  | warning  | `policy-library` version drift across element `Chart.yaml` files |
 | POLICY070  | error    | `helm lint` non-zero |
 | POLICY080  | error    | `kubeconform` schema check on rendered manifests |
@@ -48,8 +48,8 @@ In CI:
 
 `testdata/clusters/` holds the example fleet files, laid out like `fleet/`:
 `<cluster>.yaml` for spokes and `hubs/<hubName>.yaml` for hubs. The file name is
-the cluster name. Each `config` entry `<category>.<priority>: <value>` drives the
-cascade (matches `appset.yaml`), and a hub renders as `acm-<datacenter>`.
+the cluster name, so a hub renders as its `hubName`. The `valueFiles` entries
+drive the cascade in list order (matches `appset.yaml`).
 Override with `--fixtures-dir`, for example `--fixtures-dir fleet` to check a
 real fleet. Other files are ignored, `.yml` included.
 

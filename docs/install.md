@@ -37,7 +37,7 @@ oc get secrets -n openshift-gitops -l argocd.argoproj.io/secret-type=cluster
 
 ## Install the ApplicationSet
 
-Set `gitRepo` and `hubName` in [`appset/values.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/appset/values.yaml). `gitRepo` is the repository Argo CD reads ([The appset chart](applicationset.md#the-appset-chart)). `hubName` names this hub's fleet file, `fleet/hubs/<hubName>.yaml`, because every hub's own ManagedCluster is named `local-cluster` by default ([The hub](applicationset.md#the-hub)). Then install the chart, passing the root `values.yaml` for `policyNamespace`:
+Set `gitRepo` and `hubName` in [`appset/values.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/appset/values.yaml). `gitRepo` is the repository Argo CD reads ([The appset chart](applicationset.md#the-appset-chart)). `hubName` names this hub's fleet file, `fleet/hubs/<hubName>.yaml`, and its Applications, because every hub's own ManagedCluster is named `local-cluster` by default ([The hub](applicationset.md#the-hub)). Then install the chart, passing the root `values.yaml` for `policyNamespace`:
 
 ```sh
 helm install appset ./appset -f ./appset/values.yaml -f values.yaml

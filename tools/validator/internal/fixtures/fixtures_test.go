@@ -1,9 +1,9 @@
 package fixtures
 
 import (
-	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -12,7 +12,7 @@ func TestLoadDir(t *testing.T) {
 	tests := []struct {
 		name  string
 		files map[string]string // path under the dir -> content; a trailing "/" makes a directory
-		want  []Cluster         // Name, Hub and SourceFile (relative) are compared, in order
+		want  []Cluster         // Name and SourceFile (relative) are compared, in order
 	}{
 		{
 			name: "spokes then hubs, named by file stem",
@@ -24,7 +24,7 @@ func TestLoadDir(t *testing.T) {
 			want: []Cluster{
 				{Name: "a", SourceFile: "a.yaml"},
 				{Name: "prod-east-1", SourceFile: "prod-east-1.yaml"},
-				{Name: "acm-dc1", Hub: true, SourceFile: "hubs/acm-dc1.yaml"},
+				{Name: "acm-dc1", SourceFile: "hubs/acm-dc1.yaml"},
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestLoadDir(t *testing.T) {
 		{
 			name:  "hub and spoke may share a name",
 			files: map[string]string{"x.yaml": "revision: main\n", "hubs/x.yaml": "revision: main\n"},
-			want:  []Cluster{{Name: "x", SourceFile: "x.yaml"}, {Name: "x", Hub: true, SourceFile: "hubs/x.yaml"}},
+			want:  []Cluster{{Name: "x", SourceFile: "x.yaml"}, {Name: "x", SourceFile: "hubs/x.yaml"}},
 		},
 		{
 			name:  "empty dir",
@@ -77,8 +77,8 @@ func TestLoadDir(t *testing.T) {
 			}
 			for i, w := range tt.want {
 				g := got[i]
-				if g.Name != w.Name || g.Hub != w.Hub || g.SourceFile != filepath.Join(dir, w.SourceFile) {
-					t.Errorf("[%d] got {%s hub=%v %s}, want {%s hub=%v %s}", i, g.Name, g.Hub, g.SourceFile, w.Name, w.Hub, w.SourceFile)
+				if g.Name != w.Name || g.SourceFile != filepath.Join(dir, w.SourceFile) {
+					t.Errorf("[%d] got {%s %s}, want {%s %s}", i, g.Name, g.SourceFile, w.Name, w.SourceFile)
 				}
 			}
 		})
@@ -97,35 +97,40 @@ func TestLoadDir_testdata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]bool{"nonprod-west-1": false, "prod-east-1": false, "acm-dc1": true}
+	want := []string{"nonprod-west-1", "prod-east-1", "acm-dc1"}
 	if len(got) != len(want) {
 		t.Fatalf("got %d clusters, want %d", len(got), len(want))
 	}
-	for _, c := range got {
-		hub, ok := want[c.Name]
-		if !ok || c.Hub != hub || len(c.Issues) != 0 || c.Revision != "main" || c.Config["datacenter.20"] == "" {
+	for i, c := range got {
+		if c.Name != want[i] || len(c.Issues) != 0 || c.Revision != "main" || len(c.ValueFiles) == 0 {
 			t.Errorf("unexpected fixture %+v", c)
 		}
 	}
 }
 
 func TestParse(t *testing.T) {
-	long := strings.Repeat("a", 64)
 	tests := []struct {
-		name     string
-		in       string
-		revision string
-		config   map[string]string
-		issues   []Issue // Message is a substring of the actual message
+		name       string
+		in         string
+		revision   string
+		valueFiles []string
+		issues     []Issue // Message is a substring of the actual message
 	}{
 		{
-			name:     "valid",
-			in:       "revision: main\nconfig:\n  environment.10: prod\n  datacenter.20: dc1\n",
-			revision: "main",
-			config:   map[string]string{"environment.10": "prod", "datacenter.20": "dc1"},
+			name:       "valid",
+			in:         "revision: main\nvalueFiles:\n  - environments/prod.yaml\n  - datacenters/dc1.yaml\n",
+			revision:   "main",
+			valueFiles: []string{"environments/prod.yaml", "datacenters/dc1.yaml"},
 		},
-		{name: "missing config", in: "revision: v1.4.0\n", revision: "v1.4.0"},
-		{name: "empty config", in: "revision: v1.4.0\nconfig: {}\n", revision: "v1.4.0"},
+		{
+			name:       "list order kept",
+			in:         "revision: main\nvalueFiles:\n  - platforms/aws.yaml\n  - environments/prod.yaml\n",
+			revision:   "main",
+			valueFiles: []string{"platforms/aws.yaml", "environments/prod.yaml"},
+		},
+		{name: "missing valueFiles", in: "revision: v1.4.0\n", revision: "v1.4.0"},
+		{name: "empty valueFiles", in: "revision: v1.4.0\nvalueFiles: []\n", revision: "v1.4.0"},
+		{name: "null valueFiles", in: "revision: v1.4.0\nvalueFiles:\n", revision: "v1.4.0"},
 		{name: "quoted numeric revision", in: "revision: \"1.10\"\n", revision: "1.10"},
 		{name: "tagged numeric revision", in: "revision: !!str 1.10\n", revision: "1.10"},
 		{name: "revision with slash", in: "revision: feature/fleet-files\n", revision: "feature/fleet-files"},
@@ -140,10 +145,10 @@ func TestParse(t *testing.T) {
 			issues: []Issue{{Line: 1, Message: "revision is read by Argo CD as 1.234567e+06 (float64)"}},
 		},
 		{
-			name:   "missing revision",
-			in:     "config:\n  environment.10: prod\n",
-			config: map[string]string{"environment.10": "prod"},
-			issues: []Issue{{Message: "revision is required"}},
+			name:       "missing revision",
+			in:         "valueFiles:\n  - environments/prod.yaml\n",
+			valueFiles: []string{"environments/prod.yaml"},
+			issues:     []Issue{{Message: "revision is required"}},
 		},
 		{name: "null revision", in: "revision:\n", issues: []Issue{{Line: 1, Message: "revision is required"}}},
 		{name: "tilde revision", in: "revision: ~\n", issues: []Issue{{Line: 1, Message: "revision is required"}}},
@@ -163,7 +168,13 @@ func TestParse(t *testing.T) {
 			name:     "unknown key",
 			in:       "revision: main\nlabels:\n  a: b\n",
 			revision: "main",
-			issues:   []Issue{{Line: 2, Message: "unknown key labels: only revision and config are allowed"}},
+			issues:   []Issue{{Line: 2, Message: "unknown key labels: only revision and valueFiles are allowed"}},
+		},
+		{
+			name:     "old config key",
+			in:       "revision: main\nconfig:\n  environment.10: prod\n",
+			revision: "main",
+			issues:   []Issue{{Line: 2, Message: "unknown key config: only revision and valueFiles are allowed"}},
 		},
 		{
 			name: "misspelt revision",
@@ -181,94 +192,52 @@ func TestParse(t *testing.T) {
 			issues:   []Issue{{Line: 2, Message: `mapping key "revision" already defined at line 1`}},
 		},
 		{
-			name:     "numeric config value",
-			in:       "revision: main\nconfig:\n  datacenter.20: 1\n  environment.10: prod\n",
-			revision: "main",
-			config:   map[string]string{"environment.10": "prod"},
-			issues:   []Issue{{Line: 3, Message: `config "datacenter.20" is read by Argo CD as 1 (float64), not a string`}},
+			name:       "numeric entry",
+			in:         "revision: main\nvalueFiles:\n  - 1.10\n  - environments/prod.yaml\n",
+			revision:   "main",
+			valueFiles: []string{"environments/prod.yaml"},
+			issues:     []Issue{{Line: 3, Message: "valueFiles entry is read by Argo CD as 1.1 (float64), not a string"}},
 		},
 		{
-			name:     "bool config value",
-			in:       "revision: main\nconfig:\n  gpu.40: true\n",
-			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `config "gpu.40" is read by Argo CD as true (bool)`}},
-		},
-		{
-			name:     "null config value",
-			in:       "revision: main\nconfig:\n  gpu.40:\n",
-			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `config "gpu.40" has no value`}},
-		},
-		{
-			name:     "YAML 1.1 boolean config values",
-			in:       "revision: main\nconfig:\n  a.1: on\n  b.2: off\n  c.3: y\n  d.4: no\n",
+			name:     "YAML 1.1 boolean entries",
+			in:       "revision: main\nvalueFiles:\n  - yes\n  - off\n",
 			revision: "main",
 			issues: []Issue{
-				{Line: 3, Message: `config "a.1" is read by Argo CD as true (bool)`},
-				{Line: 4, Message: `config "b.2" is read by Argo CD as false (bool)`},
-				{Line: 5, Message: `config "c.3" is read by Argo CD as true (bool)`},
-				{Line: 6, Message: `config "d.4" is read by Argo CD as false (bool)`},
+				{Line: 3, Message: "valueFiles entry is read by Argo CD as true (bool)"},
+				{Line: 4, Message: "valueFiles entry is read by Argo CD as false (bool)"},
 			},
 		},
 		{
-			name:     "alias config value",
-			in:       "revision: &r main\nconfig:\n  environment.10: *r\n",
-			revision: "main",
-			config:   map[string]string{"environment.10": "main"},
+			name:       "quoted numeric entry",
+			in:         "revision: main\nvalueFiles:\n  - \"1.10\"\n",
+			revision:   "main",
+			valueFiles: []string{"1.10"},
 		},
 		{
-			name:     "quoted numeric config value",
-			in:       "revision: main\nconfig:\n  datacenter.20: \"1\"\n",
-			revision: "main",
-			config:   map[string]string{"datacenter.20": "1"},
+			name:       "null entry",
+			in:         "revision: main\nvalueFiles:\n  -\n  - environments/prod.yaml\n",
+			revision:   "main",
+			valueFiles: []string{"environments/prod.yaml"},
+			issues:     []Issue{{Line: 3, Message: "valueFiles entry has no value"}},
 		},
 		{
-			name:     "config value with slash",
-			in:       "revision: main\nconfig:\n  environment.10: a/b\n",
-			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `config "environment.10": "a/b" is not a label value`}},
+			name:       "duplicate entry",
+			in:         "revision: main\nvalueFiles:\n  - environments/prod.yaml\n  - platforms/aws.yaml\n  - environments/prod.yaml\n",
+			revision:   "main",
+			valueFiles: []string{"environments/prod.yaml", "platforms/aws.yaml"},
+			issues:     []Issue{{Line: 5, Message: `valueFiles "environments/prod.yaml" is listed twice`}},
 		},
 		{
-			name:     "config value with leading dash",
-			in:       "revision: main\nconfig:\n  environment.10: -x\n",
+			name:     "valueFiles is a map",
+			in:       "revision: main\nvalueFiles:\n  environment.10: prod\n",
 			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `"-x" is not a label value`}},
+			issues:   []Issue{{Line: 3, Message: "cannot unmarshal !!map"}},
 		},
 		{
-			name:     "config value with trailing dot",
-			in:       "revision: main\nconfig:\n  environment.10: x.\n",
+			name:     "valueFiles is a string",
+			in:       "revision: main\nvalueFiles: environments/prod.yaml\n",
 			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `"x." is not a label value`}},
-		},
-		{
-			name:     "empty config value",
-			in:       "revision: main\nconfig:\n  environment.10: \"\"\n",
-			revision: "main",
-			issues:   []Issue{{Line: 3, Message: `"" is not a label value`}},
-		},
-		{
-			name:     "64-character config value",
-			in:       "revision: main\nconfig:\n  environment.10: " + long + "\n",
-			revision: "main",
-			issues:   []Issue{{Line: 3, Message: "is not a label value"}},
-		},
-		{
-			name:     "63-character config value",
-			in:       "revision: main\nconfig:\n  environment.10: " + long[1:] + "\n",
-			revision: "main",
-			config:   map[string]string{"environment.10": long[1:]},
-		},
-		{
-			name:     "label value punctuation",
-			in:       "revision: main\nconfig:\n  environment.10: a-b_c.d\n",
-			revision: "main",
-			config:   map[string]string{"environment.10": "a-b_c.d"},
-		},
-		{
-			name:     "config is not a map",
-			in:       "revision: main\nconfig: prod\n",
-			revision: "main",
-			issues:   []Issue{{Line: 2, Message: "cannot unmarshal !!str `prod`"}},
+			issues:   []Issue{{Line: 2, Message: "cannot unmarshal !!str"}},
 		},
 		{
 			name: "list instead of a map",
@@ -290,8 +259,8 @@ func TestParse(t *testing.T) {
 			if c.Revision != tt.revision {
 				t.Errorf("Revision = %q, want %q", c.Revision, tt.revision)
 			}
-			if !maps.Equal(c.Config, tt.config) {
-				t.Errorf("Config = %v, want %v", c.Config, tt.config)
+			if !slices.Equal(c.ValueFiles, tt.valueFiles) {
+				t.Errorf("ValueFiles = %v, want %v", c.ValueFiles, tt.valueFiles)
 			}
 			if len(c.Issues) != len(tt.issues) {
 				t.Fatalf("got %d issues, want %d: %+v", len(c.Issues), len(tt.issues), c.Issues)

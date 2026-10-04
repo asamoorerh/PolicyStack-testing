@@ -9,10 +9,10 @@
 #
 # Fleet file this cluster needs, fleet/<that-name>.yaml on the default branch:
 #   revision: main             # required; branch, tag or SHA
-#   config:
-#     environment.10: prod     # reuses values/environments/prod.yaml
-#     datacenter.20: <dc>
-#     platform.30: aws
+#   valueFiles:
+#     - environments/prod.yaml # reuses the prod baseline
+#     - datacenters/<dc>.yaml
+#     - platforms/aws.yaml
 #
 # On top of the prod baseline (cert-manager CA, external-secrets, compliance scan,
 # manual-remediations, cluster DNS), this cluster tests what bare metal could not.
