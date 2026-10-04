@@ -24,7 +24,7 @@ config:
   platform.30: aws
 ```
 
-Categories are dynamic. `tenant.40: payments` adds `values/tenants/payments.yaml`. The repo's priorities are environment `.10`, datacenter `.20`, platform `.30` and tenant `.40`. The config keys are the old `config.<baseDomain>/` label keys without the prefix ([Moving from cluster labels](rollout.md#moving-from-cluster-labels)).
+Categories are dynamic. `tenant.40: payments` adds `values/tenants/payments.yaml`. The repo's priorities are environment `.10`, datacenter `.20`, platform `.30` and tenant `.40`. The config keys are the old `config.<baseDomain>/` label keys without the prefix.
 
 Upstream ships no live fleet files, since a shipped file would configure a real cluster as soon as someone installs from upstream. The examples are the validator's fixtures in [`tools/validator/testdata/clusters/`](https://github.com/PolicyStack/PolicyStack/tree/main/tools/validator/testdata/clusters): `prod-east-1.yaml`, `nonprod-west-1.yaml` and `hubs/acm-dc1.yaml`.
 
