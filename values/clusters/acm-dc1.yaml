@@ -1,17 +1,16 @@
 # Per-cluster values for the ACM hub in dc1.
 #
-# This file is selected for the hub because the ManagedCluster carries local-cluster="true", which
-# makes the ApplicationSet resolve values/acm/acm-<datacenter>.yaml and this file instead of
-# values/clusters/<clusterName>.yaml. The datacenter, dc1, comes from the hub's fleet file below.
-# The Helm release becomes <element>-acm-dc1.
+# The hub's ManagedCluster carries local-cluster="true", so the ApplicationSet names it by the
+# appset chart's hubName (default acm-dc1) instead of its ManagedCluster name. This file is
+# values/clusters/<hubName>.yaml, and the Helm release becomes <element>-acm-dc1.
 #
-# Fleet file on the default branch: fleet/hubs/<hubName>.yaml, where hubName is set in the appset
-# chart (default acm-dc1):
+# Fleet file on the default branch, fleet/hubs/<hubName>.yaml:
 #   revision: main             # required; branch, tag or SHA
-#   config:
-#     environment.10: prod
-#     datacenter.20: dc1
-#     platform.30: baremetal
+#   valueFiles:
+#     - environments/prod.yaml
+#     - datacenters/dc1.yaml
+#     - platforms/baremetal.yaml
+#     - acm/acm-dc1.yaml
 #
 # On top of the prod baseline in values/environments/prod.yaml, this cluster runs:
 stack:

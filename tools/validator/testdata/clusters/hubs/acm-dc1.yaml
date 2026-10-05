@@ -1,5 +1,6 @@
 revision: main
-config:
-  environment.10: prod
-  datacenter.20: dc1
-  platform.30: baremetal
+valueFiles:
+  - environments/prod.yaml
+  - datacenters/dc1.yaml
+  - platforms/baremetal.yaml
+  - acm/acm-dc1.yaml

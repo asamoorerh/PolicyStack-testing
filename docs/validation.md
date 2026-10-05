@@ -4,8 +4,8 @@
 `tools/validator/testdata/clusters`, building the list of values files the way the ApplicationSet
 does ([Order](values.md#order)). It checks the element sources and the rendered output. The
 fixtures are the example [fleet files](applicationset.md#fleet-files): `prod-east-1.yaml`,
-`nonprod-west-1.yaml` and the hub's `hubs/acm-dc1.yaml`. A file under `hubs/` is a hub and renders
-as `acm-<datacenter>`, so the hub in `dc1` reads the `acm-dc1` files. Their files in `values/` are
+`nonprod-west-1.yaml` and the hub's `hubs/acm-dc1.yaml`. A file is named after its cluster, so
+`hubs/acm-dc1.yaml` renders as `acm-dc1` and reads `values/clusters/acm-dc1.yaml`. Their files in `values/` are
 rendered too.
 
 It needs Go and Helm. Use the Helm major version that CI pins

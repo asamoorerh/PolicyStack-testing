@@ -1,5 +1,5 @@
 revision: main
-config:
-  environment.10: prod
-  datacenter.20: dc1
-  platform.30: aws
+valueFiles:
+  - environments/prod.yaml
+  - datacenters/dc1.yaml
+  - platforms/aws.yaml

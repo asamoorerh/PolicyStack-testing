@@ -1,4 +1,4 @@
-# Selected by config entry `platform.<priority>: aws` in a fleet file.
+# Listed as platforms/aws.yaml in a fleet file's valueFiles.
 # Node elements create MachineSets by cloning the cluster's worker MachineSet.
 stack:
   infraNodes:

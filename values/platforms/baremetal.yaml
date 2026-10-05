@@ -1,4 +1,4 @@
-# Selected by config entry `platform.<priority>: baremetal` in a fleet file.
+# Listed as platforms/baremetal.yaml in a fleet file's valueFiles.
 # Bare metal has no MachineSets, so storage nodes are designated by labelling existing nodes and
 # infra MachineSet creation is off entirely.
 stack:

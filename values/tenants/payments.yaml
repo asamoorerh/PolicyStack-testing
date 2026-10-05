@@ -1,10 +1,9 @@
-# Values for clusters that host the payments tenant. Selected by a custom config category in a
-# fleet file:
-#   tenant.40: payments  ->  values/tenants/payments.yaml
-#
-# Any <category>.<priority> config entry works the same way; the ApplicationSet appends
-# "s" to the category for the directory name. Priority 40 layers this file above environment (10),
-# datacenter (20) and platform (30), and below values/clusters/.
+# Values for clusters that host the payments tenant. A custom layer: any file under values/ can be
+# listed in a fleet file's valueFiles. List it after the environment, datacenter and platform files
+# to layer it above them; values/clusters/ always loads last:
+#   valueFiles:
+#     - environments/prod.yaml
+#     - tenants/payments.yaml
 stack:
   # gitopsDev needs the ArgoCD CRD from the GitOps operator on the same cluster. The platform ArgoCD
   # instance is not needed for that, so only the operator is installed. ca-bundle and link configure

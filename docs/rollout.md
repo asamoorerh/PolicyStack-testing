@@ -10,13 +10,13 @@ A cluster runs what Git holds at the revision its [fleet file](applicationset.md
     ```yaml
     # fleet/prod-east-1.yaml
     revision: main
-    config:
-      environment.10: prod
-      datacenter.20: dc1
-      platform.30: aws
+    valueFiles:
+      - environments/prod.yaml
+      - datacenters/dc1.yaml
+      - platforms/aws.yaml
     ```
 
-3. Add `values/clusters/<cluster>.yaml`, named exactly like the ManagedCluster, at the revision the fleet file pins. When that is the default branch, add it in the same pull request. It enables the elements this cluster runs beyond what its other layers enable. A misnamed file is skipped without an error ([Missing files](values.md#missing-files)). The hub uses `acm-<datacenter>` file names instead ([Order](values.md#order)).
+3. Add `values/clusters/<cluster>.yaml`, named exactly like the ManagedCluster, at the revision the fleet file pins. When that is the default branch, add it in the same pull request. It enables the elements this cluster runs beyond what its other layers enable. A misnamed file is skipped without an error ([Missing files](values.md#missing-files)). The hub's file is `values/clusters/<hubName>.yaml` ([Order](values.md#order)).
 
 Import and the pull request can come in either order. Land step 3 before or with step 2: Applications rendered before the cluster's values file exists leave that layer out, which can briefly enable an element the file turns off. Once the cluster is imported and its fleet file is on the default branch, the ApplicationSet creates one Application per element, named `<element>-prod-east-1`, in `openshift-gitops`, within about 6 minutes. An element no layer enables syncs with no resources.
 
@@ -32,7 +32,7 @@ A cluster pinned to a branch picks up every commit pushed to it. A cluster pinne
  # fleet/prod-east-1.yaml
 -revision: v1.4.0
 +revision: v1.5.0
- config:
+ valueFiles:
 ```
 
 Roll back with `git revert` of that commit, or with a pull request that sets the previous revision. Both go through the same review as any change to `fleet/` ([Protection](applicationset.md#protection)).

@@ -9,22 +9,20 @@ A fleet file declares one cluster. A managed cluster's file is `fleet/<cluster>.
 | Key | Required | Effect |
 |---|---|---|
 | `revision` | Yes | Branch, tag or commit SHA every Application for the cluster renders from ([Revision](#revision)). |
-| `config` | No. The hub needs a `datacenter` entry | A map of `<category>.<priority>: <value>`. Each entry adds `values/<category>s/<value>.yaml` to the cascade. The priority orders the files ([Order](values.md#order)). On the hub the `datacenter` entry also names the Applications and the hub values files. |
+| `valueFiles` | No | Paths under `values/`, lowest precedence first. Each entry adds that file to the cascade ([Order](values.md#order)). |
 
-No other keys are allowed. Config values follow label value syntax: at most 63 characters of alphanumerics, `-`, `_` and `.`, starting and ending with an alphanumeric. A category is alphanumerics, `-` and `_`.
-
-Argo CD reads fleet files as YAML 1.1, so `revision` and every config value must be YAML strings. Quote anything YAML reads as a number or a boolean: `"1.10"`, `"20261003"`, `"on"`, `"yes"`. Unquoted, `revision: 1.10` pins `1.1`, and `platform.30: 1.10` loads `values/platforms/1.1.yaml`. The validator checks these rules ([Validation](validation.md)).
+No other keys are allowed. Argo CD reads fleet files as YAML 1.1, so `revision` must be a YAML string. Quote a revision YAML reads as a number or a boolean: `"1.10"`, `"20261003"`, `"on"`. Unquoted, `revision: 1.10` pins `1.1`. The validator checks these rules and that every `valueFiles` entry is a file ([Validation](validation.md)).
 
 ```yaml
 # fleet/prod-east-1.yaml
 revision: main
-config:
-  environment.10: prod
-  datacenter.20: dc1
-  platform.30: aws
+valueFiles:
+  - environments/prod.yaml
+  - datacenters/dc1.yaml
+  - platforms/aws.yaml
 ```
 
-Categories are dynamic. `tenant.40: payments` adds `values/tenants/payments.yaml`. The repo's priorities are environment `.10`, datacenter `.20`, platform `.30` and tenant `.40`. The config keys are the old `config.<baseDomain>/` label keys without the prefix.
+Any file under `values/` can be listed. `tenants/payments.yaml` is a custom layer: add the file and list it where it should rank. An old `config.<baseDomain>/<category>.<priority>: <value>` label becomes the entry `<category>s/<value>.yaml`, placed in priority order.
 
 Upstream ships no live fleet files, since a shipped file would configure a real cluster as soon as someone installs from upstream. The examples are the validator's fixtures in [`tools/validator/testdata/clusters/`](https://github.com/PolicyStack/PolicyStack/tree/main/tools/validator/testdata/clusters): `prod-east-1.yaml`, `nonprod-west-1.yaml` and `hubs/acm-dc1.yaml`.
 
@@ -37,7 +35,7 @@ PolicyStack still reads three labels. ACM sets all of them, and nobody sets them
 | Label | Set by | Effect |
 |---|---|---|
 | `clusterID` | ACM, on OpenShift clusters | Selects the cluster's Argo CD secret and becomes `selectedId`. A cluster without it gets no Applications. |
-| `local-cluster` | ACM, on the hub | Switches the cluster to the hub's fleet file, hub naming and hub values files. |
+| `local-cluster` | ACM, on the hub | Switches the cluster to the hub's fleet file and names it by `hubName` ([The hub](#the-hub)). |
 | `name` | ACM | The ManagedCluster name. The Placement selector matches on it ([Placement](policies.md#placement)). |
 
 ### Revision
@@ -62,31 +60,24 @@ The hub's own ManagedCluster carries ACM's `local-cluster` label. Its fleet file
 ```yaml
 # fleet/hubs/acm-dc1.yaml
 revision: main
-config:
-  environment.10: prod
-  datacenter.20: dc1
-  platform.30: baremetal
+valueFiles:
+  - environments/prod.yaml
+  - datacenters/dc1.yaml
+  - platforms/baremetal.yaml
+  - acm/acm-dc1.yaml
 ```
+
+On the hub, `hubName` replaces the ManagedCluster name everywhere: the Applications are `<element>-<hubName>`, the cluster values file is `values/clusters/<hubName>.yaml`, and `selectedName` is `hubName`. Changing `hubName` renames the hub's Applications and every object they render. Hubs in the same datacenter share files such as `acm/acm-dc1.yaml` by listing them.
 
 `hubName` is a chart value because nothing on the hub gives it a stable, unique name:
 
 - Every hub's own ManagedCluster is named `local-cluster` by default, so the cluster name cannot tell two hubs reading this repo apart.
-- The datacenter that names the hub Applications is inside the file, so it cannot be used to find the file.
 - ACM's `localClusterName` (ACM 2.14 and later) changes only at install, or after turning off hub self-management.
 - OpenShift's `clusterID` is a UUID that changes when a hub is rebuilt.
 
 So each hub's identity is set once in its appset release, and its configuration stays in Git. `helm get values appset` shows a hub's `hubName`. `hubs/` is a subdirectory so a hub's file cannot collide with a managed cluster of the same name.
 
 A second hub reading the same repo, including a passive or disaster recovery hub, needs its own `--set hubName=<name>` on every `helm install` and `helm upgrade` ([Install the ApplicationSet](install.md#install-the-applicationset)). `helm upgrade` drops `--set` values it is not given again, so the hub falls back to the default and applies the first hub's configuration to itself.
-
-The hub has two names:
-
-| Name | Comes from | Used for |
-|---|---|---|
-| `hubName` | The appset chart | The path of the hub's fleet file |
-| `acm-<datacenter>` | The `datacenter` entry in the hub's fleet file | Application names, `values/acm/acm-<datacenter>.yaml`, `values/clusters/acm-<datacenter>.yaml` and `selectedName` |
-
-With one hub per datacenter, set `hubName` to `acm-<datacenter>` so both names match. Hubs in the same datacenter need different `hubName` values but share hub values files.
 
 ### Protection
 
@@ -142,7 +133,7 @@ The GitOpsCluster from [Import clusters into Argo CD](install.md#import-clusters
 
 | Field | Value |
 |---|---|
-| Name | `<element>-<cluster>`, or `<element>-acm-<datacenter>` on a cluster labeled `local-cluster` |
+| Name | `<element>-<cluster>`, or `<element>-<hubName>` on a cluster labeled `local-cluster` |
 | Project | `default` |
 | Source | `stack/<element>` in `gitRepo` at the cluster's revision, rendered by Helm with the [values cascade](values.md#order) |
 | Destination | The hub, `https://kubernetes.default.svc`, namespace `open-cluster-management` |
@@ -158,25 +149,17 @@ The ApplicationSet sets `preserveResourcesOnDeletion: true`, so its Applications
 
 ## Injected values
 
-Each Application passes these keys to Helm in `valuesObject`, built from the cluster's fleet file and its ACM labels. [Order](values.md#order) gives their precedence over the values files.
+Each Application passes these keys to Helm in `valuesObject`, built from the cluster's ACM labels and `hubName`. [Order](values.md#order) gives their precedence over the values files.
 
 | Key | Value |
 |---|---|
-| `selected<Category>` | The value of the fleet file's config entry in that category, for example `selectedEnvironment`. When a category has several entries, the one that sorts last in [Order](values.md#order) wins. |
-| `selected<Category>Values` | Every value of that category, as a list. |
-| `selectedName` | The cluster name, or `acm-<datacenter>` on the hub. |
+| `selectedName` | The cluster name, or `hubName` on the hub. |
 | `selectedId` | The `clusterID` label. |
 | `selector.matchExpressions` | A map with one `In` expression on the `name` label, under the key `name`. |
 
-Elements can read every key. The policy-library chart turns `selector` into each Placement's cluster selector ([Placement](policies.md#placement)). On the hub, `selectedName` is `acm-<datacenter>`, but the `name` expression holds the hub's ManagedCluster name. For `prod-east-1`:
+Elements can read every key. The policy-library chart turns `selector` into each Placement's cluster selector ([Placement](policies.md#placement)). On the hub, `selectedName` is `hubName`, but the `name` expression holds the hub's ManagedCluster name. An element that needs a fact such as the environment reads a key that the matching values file sets. For `prod-east-1`:
 
 ```yaml
-selectedDatacenter: dc1
-selectedEnvironment: prod
-selectedPlatform: aws
-selectedDatacenterValues: [dc1]
-selectedEnvironmentValues: [prod]
-selectedPlatformValues: [aws]
 selectedName: prod-east-1
 selectedId: <clusterID>
 selector:
@@ -195,7 +178,7 @@ The [appset chart](https://github.com/PolicyStack/PolicyStack/tree/main/appset) 
 | Value | Set in | Use |
 |---|---|---|
 | `gitRepo` | `appset/values.yaml` | The repository the git generators read and every Application renders from. |
-| `hubName` | `appset/values.yaml`, or `--set` on each additional hub | Names this hub's fleet file, `fleet/hubs/<hubName>.yaml`. Default `acm-dc1` ([The hub](#the-hub)). |
+| `hubName` | `appset/values.yaml`, or `--set` on each additional hub | Names this hub's fleet file, `fleet/hubs/<hubName>.yaml`, its Applications and its cluster values file. Default `acm-dc1` ([The hub](#the-hub)). |
 | `policyNamespace` | Root `values.yaml` | The namespace the chart creates. Elements read the same value. Do not change it. |
 
 The install command passes both values files ([Install the ApplicationSet](install.md#install-the-applicationset)). The chart also binds the `global` ManagedClusterSet into `policyNamespace`, so element Placements can select clusters ([Placement](policies.md#placement)).

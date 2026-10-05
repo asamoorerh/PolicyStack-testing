@@ -1,4 +1,5 @@
-# Hub-only values for dc1, layered under values/clusters/acm-dc1.yaml.
+# Hub-only values for dc1, listed last in the hub's valueFiles so only values/clusters/acm-dc1.yaml
+# overrides it.
 #
 # Reserved for elements that manage the hub's own control plane - advancedClusterManagement and
 # openshiftGitops. Both are deliberately left disabled: this cluster's ACM and ArgoCD are what

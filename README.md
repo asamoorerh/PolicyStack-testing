@@ -20,10 +20,10 @@ On the ACM hub, with the [prerequisites](https://policystack.github.io/PolicySta
 4. Commit a fleet file for a managed cluster to the repo's default branch, `fleet/prod-east-1.yaml` for the ManagedCluster `prod-east-1` ([Fleet files](https://policystack.github.io/PolicyStack/applicationset/#fleet-files)):
    ```yaml
    revision: main
-   config:
-     environment.10: prod
-     datacenter.20: dc1
-     platform.30: aws
+   valueFiles:
+     - environments/prod.yaml
+     - datacenters/dc1.yaml
+     - platforms/aws.yaml
    ```
 
 Every element ships disabled. Enable it in a values layer, such as `values/clusters/prod-east-1.yaml` for the cluster above; see [Values cascade](https://policystack.github.io/PolicyStack/values/).
