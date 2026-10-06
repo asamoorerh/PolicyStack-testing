@@ -1,4 +1,3 @@
 revision: main
 valuesFiles:
   - environments/prod.yaml
-  - platforms/aws.yaml
