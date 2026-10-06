@@ -3,8 +3,8 @@
 install:
   platform: KubeVirt
   credential:
-    namespace: hcp-credentials
-    name: kubevirt
+    namespace: open-cluster-management
+    name: kubevirt-secret
   nodePools:
     workers:
       replicas: 2
