@@ -1,0 +1,6 @@
+revision: main
+hub: aws-east-1
+valueFiles:
+  - platforms/kubevirt.yaml
+install:
+  version: 4.20.40
