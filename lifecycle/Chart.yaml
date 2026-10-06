@@ -6,4 +6,4 @@ version: 0.1.0
 dependencies:
   - name: policy-library
     version: "2.1.0"
-    repository: "https://docker.io/abootface"
+    repository: "docker.io/abootface"
