@@ -1,5 +1,4 @@
-revision: feature/testing
+revision: main
 valuesFiles:
   - environments/prod.yaml
-  - databases/dc1.yaml
   - platforms/aws.yaml

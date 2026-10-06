@@ -1,0 +1,16 @@
+stack:
+  openshiftVirtualization:
+    enabled: true
+  metallb:
+    enabled: true
+    toggles:
+      addressing: true
+    config:
+      ipAddressPools:
+        ip-addresspool:
+          addresses:
+            - 10.10.10.200-10.10.10.210
+      l2Advertisements:
+        l2-adv:
+          ipAddressPools:
+            - ip-addresspool
