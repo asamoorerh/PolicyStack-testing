@@ -9,7 +9,7 @@ stack:
       ipAddressPools:
         hcp-api:
           addresses:
-            - 10.10.10.15-10.10.10-20
+            - 10.10.10.15-10.10.10.20
       l2Advertisements:
         hcp-api:
           ipAddressPools:
