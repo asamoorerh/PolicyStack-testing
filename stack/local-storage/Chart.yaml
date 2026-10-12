@@ -7,4 +7,4 @@ appVersion: "1.16.0"
 dependencies:
   - name: policy-library
     version: "3.0.0"
-    repository: "https://policystack.github.io/PolicyStack-chart"
+    repository: "oci://docker.io/abootface"
