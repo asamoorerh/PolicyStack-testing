@@ -2,7 +2,7 @@ stack:
   openshiftVirtualization:
     enabled: true
   metallb:
-    enabled: true
+    enabled: false
     toggles:
       addressing: true
     config:
