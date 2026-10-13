@@ -27,7 +27,7 @@ version: 0.1.0
 dependencies:
   - name: policy-library
     version: "1.1.0"
-    repository: oci://docker.io/abootface
+    repository: https://policystack.github.io/PolicyStack-chart
 `
 	}
 	if err := os.WriteFile(filepath.Join(dir, "Chart.yaml"), []byte(chartYAML), 0o644); err != nil {
