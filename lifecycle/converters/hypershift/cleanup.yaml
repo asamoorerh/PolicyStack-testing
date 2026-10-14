@@ -1,0 +1,14 @@
+{{- /*
+Runs once the HostedCluster is gone. Leaves the shared namespace and the credential alone.
+*/ -}}
+{{- $c := include "lifecycle.cluster" . }}
+{{- range list "pull-secret" "ssh-key" "etcd-encryption-key" }}
+- complianceType: mustnothave
+  objectDefinition:
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: {{ $c }}-{{ . }}
+      namespace: {{ $.Values.install.namespace }}
+{{- end }}
+{{- include "lifecycle.cleanupManifests" . }}

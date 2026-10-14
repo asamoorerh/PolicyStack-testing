@@ -15,8 +15,10 @@ A fleet file declares one cluster. A managed cluster's file is `fleet/<cluster>.
 | `hub` | No | `hubName` of the hub that builds the cluster. Without it the cluster must be imported ([Cluster lifecycle](lifecycle.md)). |
 | `state` | No | `present` (default) or `absent`. `absent` destroys the cluster ([Destroy](lifecycle.md#destroy)). Requires `hub`. |
 | `install` | No | The cluster to build ([Fleet keys](lifecycle.md#fleet-keys)). Requires `hub`. |
+| `version` | No | OpenShift release, `x.y.z`, the cluster runs. Bumping it upgrades the cluster ([Upgrades](upgrades.md)). Required with `hub`. |
+| `channel` | No | Upgrade channel, such as `stable-4.20` ([Upgrades](upgrades.md)). |
 
-No other keys are allowed. A hub's own file cannot set `hub`, `state` or `install`, and `hub` must name a hub that has a file in `fleet/hubs/`. The Day-2 ApplicationSet ignores the three lifecycle keys. Argo CD reads fleet files as YAML 1.1, so `revision` must be a YAML string. Quote a revision YAML reads as a number or a boolean: `"1.10"`, `"20261003"`, `"on"`. Unquoted, `revision: 1.10` pins `1.1`. The validator checks these rules and that every `valueFiles` entry is a file ([Validation](validation.md)).
+No other keys are allowed. A hub's own file cannot set `hub`, `state` or `install`, and `hub` must name a hub that has a file in `fleet/hubs/`. The Day-2 ApplicationSet ignores the three lifecycle keys. `version` and `channel` go only in the fleet file, never in a values layer, so the clusters an upgrade moves are the fleet files it changes. Argo CD reads fleet files as YAML 1.1, so `revision`, `version` and `channel` must be YAML strings. Quote one YAML reads as a number or a boolean: `"1.10"`, `"20261003"`, `"on"`. Unquoted, `revision: 1.10` pins `1.1`. The validator checks these rules and that every `valueFiles` entry is a file ([Validation](validation.md)).
 
 ```yaml
 # fleet/prod-east-1.yaml
@@ -29,7 +31,7 @@ valueFiles:
 
 Any file under `values/` can be listed. `tenants/payments.yaml` is a custom layer: add the file and list it where it should rank. An old `config.<baseDomain>/<category>.<priority>: <value>` label becomes the entry `<category>s/<value>.yaml`, placed in priority order.
 
-Upstream ships no live fleet files, since a shipped file would configure a real cluster as soon as someone installs from upstream. The examples are the validator's fixtures in [`tools/validator/testdata/clusters/`](https://github.com/PolicyStack/PolicyStack/tree/main/tools/validator/testdata/clusters): `prod-east-1.yaml`, `nonprod-west-1.yaml`, `hubs/acm-dc1.yaml`, and the hub-built `hcp-kubevirt.yaml`, `hcp-agent.yaml` and `hcp-retired.yaml`.
+Upstream ships no live fleet files, since a shipped file would configure a real cluster as soon as someone installs from upstream. The examples are the validator's fixtures in [`tools/validator/testdata/clusters/`](https://github.com/PolicyStack/PolicyStack/tree/main/tools/validator/testdata/clusters): `prod-east-1.yaml`, `nonprod-west-1.yaml`, `hubs/acm-dc1.yaml`, and the hub-built `hcp-kubevirt.yaml`, `hcp-agent.yaml`, `hcp-retired.yaml`, `hive-aws.yaml`, `hive-retired.yaml`, `sno-edge.yaml` and `sno-retired.yaml`.
 
 The ApplicationSet reads fleet files only from the repo's default branch, as `HEAD`. Copies of `fleet/` on other branches have no effect. Changing the default branch re-points every cluster to the fleet files on the new branch, and a cluster without one there loses its Applications.
 
@@ -64,7 +66,7 @@ The [Render Diff](workflows.md#render-diff) comment on a PR shows each cluster's
 
 ### The hub
 
-The hub's own ManagedCluster carries ACM's `local-cluster` label. Its fleet file is `fleet/hubs/<hubName>.yaml`, where `hubName` is an appset chart value set once per hub, `acm-dc1` by default ([The appset chart](#the-appset-chart)).
+The hub's own ManagedCluster carries ACM's `local-cluster` label. Its fleet file is `fleet/hubs/<hubName>.yaml`, where `hubName` is an appset chart value set once per hub, with no default ([The appset chart](#the-appset-chart)).
 
 ```yaml
 # fleet/hubs/acm-dc1.yaml
@@ -86,7 +88,7 @@ On the hub, `hubName` replaces the ManagedCluster name everywhere: the Applicati
 
 So each hub's identity is set once in its appset release, and its configuration stays in Git. `helm get values appset` shows a hub's `hubName`. `hubs/` is a subdirectory so a hub's file cannot collide with a managed cluster of the same name.
 
-A second hub reading the same repo, including a passive or disaster recovery hub, needs its own `--set hubName=<name>` on every `helm install` and `helm upgrade` ([Install the ApplicationSet](install.md#install-the-applicationset)). `helm upgrade` drops `--set` values it is not given again, so the hub falls back to the default and applies the first hub's configuration to itself.
+Every hub reading the same repo, including a passive or disaster recovery hub, passes its own `--set hubName=<name>` on every `helm install` and `helm upgrade` ([Install the ApplicationSet](install.md#install-the-applicationset)). The chart fails without it, rather than apply another hub's configuration.
 
 ### Protection
 
@@ -106,7 +108,7 @@ The same review guards cluster creation and destruction: a merged `state: absent
 
 ## Generators
 
-The generator, as rendered with the default `hubName`:
+The generator, as rendered with `hubName=acm-dc1`:
 
 ```yaml
 generators:
@@ -142,7 +144,7 @@ The GitOpsCluster from [Import clusters into Argo CD](install.md#import-clusters
 
 ### Lifecycle generator
 
-`policystack-lifecycle` has one generator, as rendered with the default `hubName`:
+`policystack-lifecycle` has one generator, as rendered with `hubName=acm-dc1`:
 
 ```yaml
 generators:
@@ -171,15 +173,21 @@ It reads every fleet file at `HEAD` and needs no cluster secret, since the clust
 | Project | `default` |
 | Source | `stack/<element>` in `gitRepo` at the cluster's revision, rendered by Helm with the [values cascade](values.md#order) |
 | Destination | The hub, `https://kubernetes.default.svc`, namespace `open-cluster-management` |
-| Sync | Automated with `prune` and `selfHeal`, sync option `RespectIgnoreDifferences=true` |
+| Sync | Automated with `prune`, `selfHeal` and `allowEmpty`, sync option `RespectIgnoreDifferences=true` |
 
 `<element>` is the directory name and `<cluster>` the ManagedCluster name. Argo CD uses the Application name as the Helm release name, and every rendered object name derives from it ([Rendered objects](policies.md#rendered-objects), [Naming limits](policies.md#naming-limits)).
 
 Argo CD deploys only to the hub. ACM delivers the policies to the managed clusters ([Placement](policies.md#placement)). The chart sets `policyNamespace` on every object it renders, so the destination namespace is unused.
 
-Automated sync leaves `allowEmpty` unset, so it never prunes an Application down to no objects ([Disabling an element](rollout.md#disabling-an-element)).
+`allowEmpty` lets automated sync prune a disabled element down to no objects ([Disabling an element](rollout.md#disabling-an-element)).
 
-`policystack` sets `preserveResourcesOnDeletion: true`, so its Applications carry no resources finalizer and deleting one leaves its objects on the hub ([Removing an element](rollout.md#removing-an-element)).
+`policystack` sets `preserveResourcesOnDeletion: false`, so its Applications carry the resources finalizer and deleting one deletes its objects on the hub ([Removing an element](rollout.md#removing-an-element)). Removal stays bounded:
+
+- A failed render prunes nothing. The Application reports a `ComparisonError` and keeps its objects.
+- A failed generation deletes nothing. The ApplicationSet changes no Application until it is fixed ([Revision](#revision)).
+- The destination is always the hub, so Argo CD deletes only hub objects. ACM then removes the policies from the managed cluster ([What happens on the managed cluster](rollout.md#what-happens-on-the-managed-cluster)).
+
+ACM copies each Policy into the cluster's namespace on the hub. From policy-library 3.1.0 the chart sets `copyPolicyMetadata: false`, so the copies carry no Argo CD tracking labels or annotations, and Argo CD never prunes them. Clusters pinned to a revision with an older chart pin still copy the metadata until their pin moves.
 
 The lifecycle Applications differ:
 
@@ -190,7 +198,7 @@ The lifecycle Applications differ:
 | Destination | The hub, namespace `open-cluster-management` |
 | Sync | Automated with `prune` and `selfHeal` |
 
-`policystack-lifecycle` sets `preserveResourcesOnDeletion: false`. Deleting a lifecycle Application deletes its Policies, and the cluster keeps running unmanaged ([Abandon](lifecycle.md#abandon)).
+`policystack-lifecycle` also sets `preserveResourcesOnDeletion: false`. Deleting a lifecycle Application deletes its Policies, and the cluster keeps running unmanaged ([Abandon](lifecycle.md#abandon)).
 
 ## Injected values
 
@@ -201,6 +209,7 @@ Each Application passes these keys to Helm in `valuesObject`, built from the clu
 | `selectedName` | The cluster name, or `hubName` on the hub. |
 | `selectedId` | The `clusterID` label. |
 | `selector.matchExpressions` | A map with one `In` expression on the `name` label, under the key `name`. |
+| `version`, `channel` | The fleet file's keys, only when it sets them. |
 
 Elements can read every key. The policy-library chart turns `selector` into each Placement's cluster selector ([Placement](policies.md#placement)). On the hub, `selectedName` is `hubName`, but the `name` expression holds the hub's ManagedCluster name. An element that needs a fact such as the environment reads a key that the matching values file sets. For `prod-east-1`:
 
@@ -216,7 +225,7 @@ selector:
         - "prod-east-1"
 ```
 
-A lifecycle Application gets no selector. It passes the fleet file's own keys instead: `hub`, `state` (default `present`) and `install` (default `{}`). They rank above every values file, so the fleet file's `install` overrides the cascade ([Values](lifecycle.md#values)).
+A lifecycle Application gets no selector. It passes the fleet file's own keys instead: `hub`, `state` (default `present`), `version` and `channel` when set, and `install` (default `{}`). They rank above every values file, so the fleet file's `install` overrides the cascade ([Values](lifecycle.md#values)).
 
 ## The appset chart
 
@@ -225,9 +234,9 @@ The [appset chart](https://github.com/PolicyStack/PolicyStack/tree/main/appset) 
 | Value | Set in | Use |
 |---|---|---|
 | `gitRepo` | `appset/values.yaml` | The repository the git generators read and every Application renders from. |
-| `hubName` | `appset/values.yaml`, or `--set` on each additional hub | Names this hub's fleet file, `fleet/hubs/<hubName>.yaml`, its Applications and its cluster values file. Selects the fleet files whose `hub` this hub builds. Default `acm-dc1` ([The hub](#the-hub)). |
+| `hubName` | `--set` on every `helm install` and `helm upgrade` | Names this hub's fleet file, `fleet/hubs/<hubName>.yaml`, its Applications and its cluster values file. Selects the fleet files whose `hub` this hub builds. Required, no default ([The hub](#the-hub)). |
 | `policyNamespace` | Root `values.yaml` | The namespace the chart creates. Elements read the same value. Do not change it. |
 
 The install command passes both values files ([Install the ApplicationSet](install.md#install-the-applicationset)). The chart also binds the `global` ManagedClusterSet into `policyNamespace`, so element Placements can select clusters ([Placement](policies.md#placement)).
 
-[`appset/appset-noformatting.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/appset/appset-noformatting.yaml) holds both ApplicationSets, one YAML document each, as `helm template` renders them with the default values, without the Helm escaping around Argo CD's template expressions. It sits outside `templates/`, so Helm never installs it.
+[`appset/appset-noformatting.yaml`](https://github.com/PolicyStack/PolicyStack/blob/main/appset/appset-noformatting.yaml) holds both ApplicationSets, one YAML document each, as `helm template` renders them with `hubName=acm-dc1`, without the Helm escaping around Argo CD's template expressions. It sits outside `templates/`, so Helm never installs it.
