@@ -1,0 +1,42 @@
+revision: main
+hub: aws-east-2
+version: 4.20.38
+channel: stable-4.20
+state: present
+valueFiles:
+  - platforms/aws.yaml
+install:
+  engine: hive
+  credential:
+    namespace: hive
+    name: aws
+  baseDomain: sandbox2317.opentlc.com
+  hive:
+    platform:
+      aws:
+        region: us-east-2
+    installConfig:
+      controlPlane:
+        replicas: 1
+        platform:
+          aws:
+            type: m6i.2xlarge
+            zones:
+              - us-east-2a
+      compute:
+        - name: worker
+          architecture: amd64
+          replicas: 0
+          platform:
+            aws:
+              zones:
+                - us-east-2a
+      networking:
+        networkType: OVNKubernetes
+        clusterNetwork:
+          - cidr: 10.128.0.0/14
+            hostPrefix: 23
+        machineNetwork:
+          - cidr: 10.0.0.0/16
+        serviceNetwork:
+          - 172.30.0.0/16
