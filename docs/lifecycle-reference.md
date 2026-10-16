@@ -87,7 +87,7 @@ The etcd key is generated once, while neither it nor the HostedCluster exists. A
 ## Day-2 handoff
 
 1. `hypershift`: once the HostedCluster is available, the hypershift-addon creates ManagedCluster `<cluster>`. `hive` and `siteconfig`: once installed, ACM imports the ManagedCluster the chart or SiteConfig created.
-2. The ManagedCluster joins `global`, the GitOpsCluster creates its Argo CD cluster secret, and ACM adds the `clusterID` label ([Import clusters into Argo CD](install.md#import-clusters-into-argo-cd)).
+2. The ManagedCluster joins `global`, the GitOpsCluster creates its Argo CD cluster secret, and ACM adds the `clusterID` label ([Install PolicyStack](install.md#install-policystack)).
 3. The Day-2 ApplicationSet pairs the secret with the same fleet file and creates the `<element>-<cluster>` Applications. It ignores `hub`, `state` and `install`.
 
 HyperShift auto-import is on by default. Setting `autoImportDisabled` in the `hypershift-addon-deploy-config` AddOnDeploymentConfig leaves a built cluster without Day-2 until it is imported by hand. Labels in `hostedCluster.metadata.labels` are copied to the ManagedCluster once, when it is created.
@@ -99,8 +99,8 @@ The guard and detach act only on a ManagedCluster with its engine's owner annota
 | Engine | Annotations | Set by |
 |---|---|---|
 | `hypershift` | `open-cluster-management/created-via: hypershift`, `import.open-cluster-management.io/hosting-cluster-name: <hub ManagedCluster>` | The hypershift-addon |
-| `hive` | `lifecycle.policystack.io/hub: <hubName>` | `present-cluster-<cluster>` |
-| `siteconfig` | `lifecycle.policystack.io/hub: <hubName>` | SiteConfig, from the ClusterInstance's `extraAnnotations` |
+| `hive` | `lifecycle.policystk.io/hub: <hubName>` | `present-cluster-<cluster>` |
+| `siteconfig` | `lifecycle.policystk.io/hub: <hubName>` | SiteConfig, from the ClusterInstance's `extraAnnotations` |
 
 A hand-made ManagedCluster needs these annotations, or the guard stops both chains.
 
@@ -163,4 +163,4 @@ An engine `<e>` is a component of [`lifecycle/`](https://github.com/PolicyStack/
 3. Add `<e>` to the `install.engine` enum in `values.schema.json`, with its keys. POLICY090 fails when the enum and the `stack` components differ ([Validation](validation.md)).
 4. Add an owner case to `lifecycle.ownerAnnotations`, a present and an absent fleet file to `tools/validator/testdata/clusters/`, and an example to [Cluster lifecycle](lifecycle.md).
 
-An engine that upgrades from the hub maps `version` onto its objects, as `hypershift` does. One that only installs uses `version` at create and leaves upgrades to `openshift-upgrade` ([Upgrades](upgrades.md)).
+An engine that upgrades from the hub maps `version` onto its objects, as `hypershift` does. One that only installs uses `version` at create and leaves upgrades to `upgrade` ([Upgrades](upgrades.md)).

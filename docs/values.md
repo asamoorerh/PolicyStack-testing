@@ -1,6 +1,6 @@
 # Values cascade
 
-Every Application renders its element chart with an ordered list of values files. The cluster's [fleet file](applicationset.md#fleet-files) chooses the files, and later files override earlier ones. The ApplicationSet builds the list in the `templatePatch` of [appset.yaml](https://github.com/PolicyStack/PolicyStack/blob/main/appset/templates/appset.yaml).
+Every Application renders its element chart with an ordered list of values files. The cluster's [fleet file](applicationset.md#fleet-files) chooses the files, and later files override earlier ones. The ApplicationSet builds the list in the `templatePatch` of [appset.yaml](https://github.com/PolicyStack/PolicyStack/blob/main/install/templates/appset.yaml).
 
 ## Order
 
@@ -37,10 +37,28 @@ oc get applications.argoproj.io infra-nodes-prod-east-1 -n openshift-gitops \
 
 Helm merges the files in order.
 
-- **Maps merge** key by key. A later file sets only the keys it changes: [nonprod-west-1.yaml](https://github.com/PolicyStack/PolicyStack/blob/main/values/clusters/nonprod-west-1.yaml) sets `retention` and `storage` under `stack.userWorkloadMonitoring.config.prometheus`, and the element defaults supply the rest.
+- **Maps merge** key by key. A later file sets only the keys it changes: [nonprod-west-1.yaml](https://github.com/PolicyStack/PolicyStack/blob/main/values/clusters/nonprod-west-1.yaml) sets `retention` and `storage` under `stack.userMonitoring.config.prometheus`, and the element defaults supply the rest.
 - **Lists replace.** A later list overwrites the whole earlier list: [dc2.yaml](https://github.com/PolicyStack/PolicyStack/blob/main/values/datacenters/dc2.yaml) restates the element's default registries next to its mirror.
 
 An element's `policies` and `configPolicies` are lists, so a layer cannot change one entry without restating them all. It flips an entry through the [`toggles`](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/README.md#toggles) map instead, and settings go in the `config` map that the element's converters read ([Conventions](elements.md#conventions)). `operatorPolicies` is a map keyed by entry name, so a layer sets one field of one entry, such as `stack.metallb.operatorPolicies.metallb.versions`. `versions` itself is a list and replaces ([Operator upgrades](rollout.md#operator-upgrades)).
+
+## Schema
+
+Each element aliases its `policy-library` dependency as `stack`, so Helm checks the merged `stack` key against the library's [values.schema.json](https://github.com/PolicyStack/PolicyStack-chart/blob/main/charts/policy-library/values.schema.json). The check runs after every layer and `valuesObject` merge. An unknown key or a wrong type then fails the render instead of producing a different policy:
+
+```text
+Error: values don't meet the specifications of the schema(s) in the following chart(s):
+stack:
+- at '/certManager': additional properties 'enabeld' not allowed
+```
+
+Argo CD reports a failed render as a ComparisonError and does not sync or prune. Every element validates the whole `stack` key, so a typo under one element in a shared layer fails every Application that reads that layer. The schema does not check:
+
+- top-level keys, such as `policyNamespace` or `selector`;
+- element names under `stack`, so `stack.certManagr` is still ignored;
+- anything inside `config`, `templateParameters` or the selectors.
+
+Never set `skipSchemaValidation` on the ApplicationSet.
 
 ## Layout
 
@@ -58,7 +76,7 @@ values/
 
 ## Example files
 
-The files under [values/](https://github.com/PolicyStack/PolicyStack/tree/main/values) configure the example clusters. They are a starting point, not a complete configuration. Every element but `openshift-upgrade` ships with `enabled: false`, and the layer that should run an element turns it on. `openshift-upgrade` acts only on the fleet file's `version` and `channel` ([Upgrades](upgrades.md)). The Read by column names the example fleet files that list the file, or the cluster whose name matches it.
+The files under [values/](https://github.com/PolicyStack/PolicyStack/tree/main/values) configure the example clusters. They are a starting point, not a complete configuration. Every element but `upgrade` ships with `enabled: false`, and the layer that should run an element turns it on. `upgrade` acts only on the fleet file's `version` and `channel` ([Upgrades](upgrades.md)). The Read by column names the example fleet files that list the file, or the cluster whose name matches it.
 
 | File | Read by | Holds |
 |---|---|---|
@@ -72,7 +90,7 @@ The files under [values/](https://github.com/PolicyStack/PolicyStack/tree/main/v
 | `values/platforms/kubevirt.yaml` | `hcp-kubevirt`, `hcp-retired` | `install` only: platform `KubeVirt`, the credential and a `workers` NodePool of 2 |
 | `values/platforms/agent.yaml` | `hcp-agent` | `install` only: platform `Agent`, the Agent namespace and the credential. No default NodePool |
 | `values/tenants/payments.yaml` | No example | A custom layer: the GitOps operator without its instance, plus a payments team Argo CD |
-| `values/acm/acm-dc1.yaml` | `hubs/acm-dc1` | Reserved for the hub's own ACM and GitOps elements. Left commented out so PolicyStack does not reconcile its own delivery path |
+| `values/acm/acm-dc1.yaml` | `hubs/acm-dc1` | Reserved for the hub's own ACM and GitOps elements. Left commented out so PolicyStack does not reconcile its own delivery path ([Hand the operators to PolicyStack](install.md#hand-the-operators-to-policystack)) |
 | `values/clusters/acm-dc1.yaml` | The hub, `hubName: acm-dc1` | The hub's elements, and a commented list of the elements left off and why |
 | `values/clusters/prod-east-1.yaml` | ManagedCluster `prod-east-1` | Infra nodes, machine health checks and user workload monitoring. Its fleet file pins the update channel |
 | `values/clusters/hcp-agent.yaml` | `lifecycle-hcp-agent` and ManagedCluster `hcp-agent` | `install`: configure services. `stack`: the guest's MetalLB ingress pool |
@@ -140,7 +158,7 @@ valueFiles:
   - acm/acm-dc1.yaml
 ```
 
-For `node-feature-discovery`, the Application is `node-feature-discovery-acm-dc1`:
+For `nfd`, the Application is `nfd-acm-dc1`:
 
 ```yaml
 valueFiles:

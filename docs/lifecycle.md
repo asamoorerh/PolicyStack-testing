@@ -5,7 +5,7 @@ Add `hub` to a cluster's fleet file and that hub builds the cluster. Set `state:
 How it works:
 
 1. The hub's ApplicationSet `policystack-lifecycle` creates Application `lifecycle-<cluster>` for each fleet file that names the hub.
-2. The Application renders the [`lifecycle/`](https://github.com/PolicyStack/PolicyStack/tree/main/lifecycle) chart into Policy `present-lifecycle-<cluster>`, placed on the hub itself.
+2. The Application renders the [`lifecycle/`](https://github.com/PolicyStack/PolicyStack/tree/main/lifecycle) chart into Policy `present-lifecycle-<cluster>`, placed on the hub itself. A managed hub imported into a Global Hub in default mode does not manage itself, so its parent renders and places the Policy for it ([Global Hub](global-hub.md#lifecycle)).
 3. ACM governance on the hub creates the cluster's objects one step at a time, each step waiting for the one before it.
 4. When the install finishes, ACM imports the cluster and the Day-2 ApplicationSet takes over. No manual step.
 
@@ -17,8 +17,8 @@ The cluster is built when `present-lifecycle-<cluster>` is Compliant. Nothing ou
 
 | You want | `engine` | Example | Upgraded by |
 |---|---|---|---|
-| OpenShift on AWS, GCP or Azure | `hive` | [AWS](#aws), [GCP](#gcp), [Azure](#azure) | `openshift-upgrade` on the cluster |
-| OpenShift on bare metal with a BMC | `siteconfig` | [Bare metal](#bare-metal) | `openshift-upgrade` on the cluster |
+| OpenShift on AWS, GCP or Azure | `hive` | [AWS](#aws), [GCP](#gcp), [Azure](#azure) | `upgrade` on the cluster |
+| OpenShift on bare metal with a BMC | `siteconfig` | [Bare metal](#bare-metal) | `upgrade` on the cluster |
 | Hosted control plane, workers as VMs on the hub | `hypershift` (default), `platform: KubeVirt` | [KubeVirt](#kubevirt) | The hub |
 | Hosted control plane, bare-metal workers | `hypershift`, `platform: Agent` | [Agent](#agent) | The hub |
 | Hosted control plane, workers you boot yourself | `hypershift`, `platform: None` | [None](#none) | The hub |
@@ -30,8 +30,8 @@ A hosted control plane runs as pods on the hub. `hive` and `siteconfig` build st
 On every hub that builds clusters:
 
 - ACM 2.16 or later.
-- The hub manages itself: its ManagedCluster has the `local-cluster` label, the default.
-- `fleet/hubs/<hubName>.yaml` exists for the hub.
+- The hub manages itself: its ManagedCluster has the `local-cluster` label, the default. Or it is a default-mode Global Hub managed hub, and the global hub runs PolicyStack.
+- `fleet/hubs/<hubName>.yaml` exists for the hub, or `fleet/<hubName>.yaml` for a default-mode managed hub.
 - For `hypershift`: the hypershift-addon on the hub, on by default. Check with `oc get managedclusteraddon hypershift-addon -n local-cluster`.
 - A credential Secret on the hub with `pullSecret` and `ssh-publickey`, plus the cloud keys for `hive`. Each example below shows the command. To show it under Infrastructure > Credentials in the console, add the labels `cluster.open-cluster-management.io/credentials=` and `cluster.open-cluster-management.io/type=<type>`.
 
@@ -180,7 +180,7 @@ install:
 
 Needs:
 
-- SiteConfig on the hub: `stack.advancedClusterManagement.config.siteConfig: true` in the hub's values layer.
+- SiteConfig on the hub: `stack.acm.config.siteConfig: true` in the hub's values layer.
 - Central infrastructure management: an AgentServiceConfig named `agent`, and the Provisioning `provisioning-configuration` with `watchAllNamespaces: true` (plus `provisioningNetwork: Disabled` on a hub without one). See [Enabling central infrastructure management](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.16/html/clusters/).
 - Hosts with a Redfish BMC that supports virtual media, reachable from the hub. Each host must reach the hub's image service and API.
 - DNS for `api.<cluster>.<baseDomain>`, resolvable from the hosts and the hub. Multi-node clusters also need `api-int` and `*.apps`.
@@ -360,7 +360,7 @@ HyperShift's default service network is `172.31.0.0/16`, the AWS default VPC ran
 | `channel` | none | Update channel, such as `stable-4.20`. Optional. |
 | `install` | none | What to build. Requires `hub`. Every key is in the [reference](lifecycle-reference.md#install-keys). |
 
-The cluster name is the fleet file name: a DNS label of at most 38 characters ([Naming limits](policies.md#naming-limits)). Most `install` keys are fixed at create ([Immutable fields](lifecycle-reference.md#immutable-fields)).
+The cluster name is the fleet file name: a DNS label of at most 30 characters, the most every element fits. The lifecycle chart alone allows 38 ([Naming limits](policies.md#naming-limits)). Most `install` keys are fixed at create ([Immutable fields](lifecycle-reference.md#immutable-fields)).
 
 ## Values
 
@@ -414,8 +414,8 @@ Maps merge across layers and lists replace ([Merge rules](values.md#merge-rules)
 For every engine:
 
 ```sh
-oc get policy -n policy present-lifecycle-<cluster>                 # Compliant = built
-oc get configurationpolicy -n local-cluster | grep <cluster>        # each step
+oc get policy -n pstack present-lifecycle-<cluster>                 # Compliant = built
+oc get configurationpolicy -n local-cluster | grep <cluster>        # each step; -n <managed-hub> in default mode
 oc get applications.argoproj.io lifecycle-<cluster> -n openshift-gitops -o jsonpath='{.status.conditions}'   # render errors
 ```
 
@@ -425,7 +425,7 @@ oc get applications.argoproj.io lifecycle-<cluster> -n openshift-gitops -o jsonp
 
 Bump `version` in the fleet file, and `channel` with it on a minor bump ([Upgrades](upgrades.md)).
 
-- `hive` and `siteconfig` clusters upgrade on the cluster through `openshift-upgrade`, like imported ones. The hub keeps the release image the cluster was installed with, since Hive and SiteConfig reject changes to it.
+- `hive` and `siteconfig` clusters upgrade on the cluster through `upgrade`, like imported ones. The hub keeps the release image the cluster was installed with, since Hive and SiteConfig reject changes to it.
 - `hypershift` clusters upgrade from the hub. With `channel` set, the HostedCluster waits until HyperShift lists `version` in `status.version.availableUpdates`. Without `channel`, it moves at once. NodePools follow once the control plane reports the new version Completed. `KubeVirt` pools replace their VMs; other platforms upgrade nodes in place.
 
 During a hosted upgrade `present-lifecycle-<cluster>` is NonCompliant, and Compliant again once the control plane and every NodePool report the new version. A minor upgrade that HyperShift blocks because `ClusterVersionUpgradeable` is False needs the annotation `hypershift.openshift.io/force-upgrade-to: <release image>` in `install.hostedCluster.metadata.annotations`.
@@ -446,7 +446,7 @@ Set `state: absent` in the fleet file and merge:
 The hub removes the cluster from ACM, deletes it, waits until it is gone, then deletes the secrets and `install.manifests` it created. Detaching deletes the cluster's Day-2 Applications and Policies without pruning anything on the cluster. Wait for the Policy, then delete the fleet file and `values/clusters/<cluster>.yaml`:
 
 ```sh
-oc get policy -n policy absent-lifecycle-<cluster>
+oc get policy -n pstack absent-lifecycle-<cluster>
 ```
 
 What is left:
@@ -462,7 +462,7 @@ Deleting the fleet file before the Policy is Compliant abandons the cluster at t
 
 ## Abandon
 
-Deleting the fleet file, or removing its `hub` key, deletes the Application `lifecycle-<cluster>` and its Policies. The cluster keeps running, unmanaged. Deleting the ApplicationSets does the same for every cluster the hub built; `helm uninstall appset` keeps them ([Install the ApplicationSet](install.md#install-the-applicationset)).
+Deleting the fleet file, or removing its `hub` key, deletes the Application `lifecycle-<cluster>` and its Policies. The cluster keeps running, unmanaged. Deleting the ApplicationSets does the same for every cluster the hub built; `helm uninstall policystack` keeps them ([Install PolicyStack](install.md#install-policystack)).
 
 To re-adopt, restore the file or the key with the same `install` values.
 
