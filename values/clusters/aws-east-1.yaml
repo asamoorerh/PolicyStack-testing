@@ -1,8 +1,8 @@
 stack:
-  openshiftVirtualization:
+  virtualization:
     enabled: true
   metallb:
-    enabled: false
+    enabled: true
     toggles:
       addressing: true
     config:

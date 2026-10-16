@@ -3,11 +3,11 @@
 CI-friendly validator for PolicyStack ACM-policy charts.
 
 Renders every element under `stack/` for a set of fixture fleet files, walking
-the same values cascade that `appset/templates/appset.yaml` applies at runtime,
+the same values cascade that `install/templates/appset.yaml` applies at runtime,
 and runs structural checks against the result. `lifecycle/` (override with
 `--lifecycle-dir`) is checked like an element but rendered only for fleet files
 that set `hub`, with the fleet file appended to the cascade the way
-`appset/templates/lifecycle.yaml` passes it in `valuesObject`.
+`install/templates/lifecycle.yaml` passes it in `valuesObject`.
 
 ## Usage
 
@@ -45,7 +45,9 @@ In CI:
 | POLICY060  | warning  | `policy-library` version drift across element `Chart.yaml` files |
 | POLICY070  | error    | `helm lint` non-zero |
 | POLICY080  | error    | `kubeconform` schema check on rendered manifests |
+| POLICY081  | error    | An escaped ACM template ACM would fail to resolve, resolved hub then managed on an empty cluster: an undefined function in any branch, a failed call such as `index` on nil, a hub lookup outside the policy namespace without `hubTemplateOptions.serviceAccountName`, a kind discovery does not serve, or output with `<no value>` or an object without `apiVersion`/`kind`. A missing object is not a failure. Findings name the sub-policy without its cluster suffix and carry no cluster, so a broken template reports once |
 | POLICY090  | error    | `Chart.yaml` name → camelCase mismatch with single key under `stack:`. For a chart whose `values.schema.json` has an `install.engine` enum (`lifecycle/`), a `stack:` key that is not an engine or an engine with no `stack:` key. Every other check then runs on each engine's component, and each fixture renders the one its `install.engine` selects |
+| POLICY091  | error    | An element name equal to another's, or starting with another's followed by `-`. Release names join element and cluster with `-`, so `a` on cluster `b-c` and `a-b` on cluster `c` would share one Application and its Policies. `lifecycle/` takes part, which reserves `lifecycle` |
 | RENDER000  | error    | `helm template` failed |
 
 <!-- --8<-- [end:rules] -->
@@ -68,6 +70,7 @@ drive the cascade in list order (matches `appset.yaml`).
 | `hive-retired` | Hive `state: absent` |
 | `sno-edge` | SiteConfig single-node cluster, defaults from `values/platforms/baremetal.yaml` |
 | `sno-retired` | SiteConfig `state: absent` |
+| `name-budget-30-characters-long` | The 30-character cluster name every element must fit (POLICY001) |
 
 Override with `--fixtures-dir`, for example `--fixtures-dir fleet` to check a
 real fleet. Other files are ignored, `.yml` included.
@@ -90,6 +93,12 @@ applied to `lifecycle/`, which ships its own `selector`.
 
 `--render-dir <dir>` also writes each render to `<dir>/<fleet file path without .yaml>/<chart>.yaml`,
 a failed one as `# RENDER000:` comments. CI diffs two of these trees on PRs (`render-diff.yml`).
+
+### Profiles
+
+`testdata/profiles/` turns on every element and toggle, so POLICY081 reaches every converter.
+`variants.yaml` holds what `all-on.yaml` cannot set at the same time. `TestProfileCoverage` fails for
+a converter with ACM templates that no profile renders.
 
 ## Required tools
 

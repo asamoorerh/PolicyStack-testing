@@ -89,7 +89,9 @@ func All() []Check {
 		&PinningCheck{},          // POLICY060
 		&LintCheck{},             // POLICY070 (Runner set by run.buildRegistry)
 		&KubeconformCheck{},      // POLICY080 (Bin, SchemasDir set by run.buildRegistry)
+		&ACMTemplateCheck{},      // POLICY081
 		&CamelCaseCheck{},        // POLICY090
+		&ElementNameCheck{},      // POLICY091
 		&RenderCheck{},           // RENDER000
 	}
 }
