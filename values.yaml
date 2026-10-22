@@ -1,2 +1,5 @@
 # Please do not change policyNamespace
 policyNamespace: policy
+stack:
+  certManager:
+    enabled: true
