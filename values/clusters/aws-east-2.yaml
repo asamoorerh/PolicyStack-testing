@@ -1,3 +1,5 @@
 stack:
   eso:
     enabled: true
+  certManager:
+    enabled: true
